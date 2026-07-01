@@ -1,0 +1,20 @@
+[
+  {
+    "url": "https://farm.example.com/example_1001.jpg",
+    "flickr_photo_id": 1001,
+    "crops": [
+      {
+        "vote_for_0": 1,
+        "vote_for_1": 4,
+        "crop_0": [0, 0, 300, 400],
+        "crop_1": [50, 25, 300, 400]
+      },
+      {
+        "vote_for_0": 3,
+        "vote_for_1": 2,
+        "crop_0": [10, 10, 300, 400],
+        "crop_1": [30, 10, 300, 400]
+      }
+    ]
+  }
+]
