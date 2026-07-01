@@ -1,0 +1,50 @@
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+env/
+
+# Logs
+*.log
+
+# Large local datasets and generated artifacts
+data/raw/*
+data/external/*
+data/cache/*
+data/pairs/images/source/*
+data/pairs/images/edit/*
+outputs/
+runs/
+checkpoints/
+weights/
+wandb/
+
+# Keep lightweight placeholders
+!data/raw/.gitkeep
+!data/external/.gitkeep
+!data/cache/.gitkeep
+!data/pairs/images/source/.gitkeep
+!data/pairs/images/edit/.gitkeep
+
+# Model artifacts
+*.ckpt
+*.pt
+*.pth
+*.safetensors
+*.onnx
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
+
