@@ -64,3 +64,39 @@ Validate the generated JSONL:
 ```bash
 python3 scripts/validate_dataset.py /tmp/reframejudge_fcdb_sample.jsonl --root .
 ```
+
+## Split FCDB Pairs
+
+Split by source photo group to avoid putting crops from the same Flickr photo in both train and test:
+
+```bash
+python3 scripts/split_dataset.py \
+  --input data/pairs/annotations/fcdb_pairs_5k.jsonl \
+  --output-dir data/pairs/annotations \
+  --prefix fcdb_ \
+  --train-ratio 0.8 \
+  --val-ratio 0.1 \
+  --seed 42
+```
+
+Validate each split:
+
+```bash
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_train.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_val.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_test.jsonl --root . --check-images
+```
+
+## Build Review HTML
+
+Create a visual review page for manual quality control:
+
+```bash
+python3 scripts/build_review_html.py \
+  --input data/pairs/annotations/fcdb_train.jsonl \
+  --output ../outputs/fcdb_train_review_100.html \
+  --project-root . \
+  --sample-size 100 \
+  --seed 7 \
+  --title "ReFrameJudge FCDB Train Review"
+```
