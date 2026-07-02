@@ -18,7 +18,21 @@ cropping_training_set.json
 cropping_testing_set.json
 ```
 
-For ReFrameJudge, the most useful file is `ranking_annotation.json`.
+For ReFrameJudge, the primary file is `ranking_annotation.json`.
+
+Reason:
+
+```text
+ranking annotation gives pairwise crop preferences.
+This directly matches ReFrameJudge's win/tie/lose task.
+```
+
+The cropping annotations are useful as secondary data, but they are not the first choice for training a pairwise judge:
+
+```text
+cropping annotation: one good crop per image, useful for source -> good_crop pairs
+ranking annotation: crop A vs crop B with votes, useful for win/lose supervision
+```
 
 Each image contains multiple crop pairs:
 
@@ -56,6 +70,25 @@ data/external/fcdb/
     <downloaded Flickr images>
 ```
 
+Download ranking annotation:
+
+```bash
+curl -L \
+  https://cdn.jsdelivr.net/gh/yiling-chen/flickr-cropping-dataset@master/ranking_annotation.json \
+  -o data/external/fcdb/ranking_annotation.json
+```
+
+Download images listed in the ranking annotation:
+
+```bash
+python3 scripts/download_fcdb_images.py \
+  --annotation data/external/fcdb/ranking_annotation.json \
+  --output-dir data/external/fcdb/images \
+  --workers 16 \
+  --timeout 8 \
+  --retries 1
+```
+
 Build ReFrameJudge pairs:
 
 ```bash
@@ -75,4 +108,3 @@ python3 scripts/prepare_fcdb_pairs.py \
   --output-jsonl data/pairs/annotations/fcdb_pairs_preview.jsonl \
   --metadata-only
 ```
-
