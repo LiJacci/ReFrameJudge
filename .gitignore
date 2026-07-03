@@ -14,12 +14,9 @@ env/
 # Logs
 *.log
 
-# Large local datasets and generated artifacts
+# Local caches and generated artifacts
 data/raw/*
-data/external/*
 data/cache/*
-data/pairs/images/source/*
-data/pairs/images/edit/*
 outputs/
 runs/
 checkpoints/
@@ -28,10 +25,7 @@ wandb/
 
 # Keep lightweight placeholders
 !data/raw/.gitkeep
-!data/external/.gitkeep
 !data/cache/.gitkeep
-!data/pairs/images/source/.gitkeep
-!data/pairs/images/edit/.gitkeep
 
 # Model artifacts
 *.ckpt
@@ -47,4 +41,3 @@ wandb/
 *.tgz
 *.rar
 *.7z
-
