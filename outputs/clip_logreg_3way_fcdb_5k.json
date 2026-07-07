@@ -1,0 +1,142 @@
+{
+  "model": "clip_logreg_3way",
+  "clip_model": "data/cache/clip-vit-base-patch32",
+  "device": "cuda",
+  "feature_dim": 2048,
+  "records": {
+    "train": 4000,
+    "val": 500,
+    "test": 500
+  },
+  "label_mapping": {
+    "lose": 0,
+    "tie": 1,
+    "win": 2
+  },
+  "class_distribution": {
+    "train": {
+      "lose": 1185,
+      "tie": 1630,
+      "win": 1185
+    },
+    "val": {
+      "lose": 156,
+      "tie": 188,
+      "win": 156
+    },
+    "test": {
+      "lose": 170,
+      "tie": 160,
+      "win": 170
+    }
+  },
+  "logreg": {
+    "C": 0.1,
+    "solver": "lbfgs",
+    "multi_class": "multinomial"
+  },
+  "val": {
+    "accuracy": 0.38,
+    "macro_precision": 0.3855180064857484,
+    "macro_recall": 0.3732496817603201,
+    "macro_f1": 0.3740212982844254,
+    "weighted_precision": 0.3840706605222734,
+    "weighted_recall": 0.38,
+    "weighted_f1": 0.37650595354284605,
+    "confusion_matrix_labels": [
+      "lose",
+      "tie",
+      "win"
+    ],
+    "confusion_matrix": [
+      [
+        50,
+        79,
+        27
+      ],
+      [
+        49,
+        90,
+        49
+      ],
+      [
+        27,
+        79,
+        50
+      ]
+    ],
+    "per_class": {
+      "lose": {
+        "precision": 0.3968253968253968,
+        "recall": 0.32051282051282054,
+        "f1": 0.3546099290780142,
+        "support": 156
+      },
+      "tie": {
+        "precision": 0.3629032258064516,
+        "recall": 0.4787234042553192,
+        "f1": 0.41284403669724773,
+        "support": 188
+      },
+      "win": {
+        "precision": 0.3968253968253968,
+        "recall": 0.32051282051282054,
+        "f1": 0.3546099290780142,
+        "support": 156
+      }
+    },
+    "roc_auc_ovr_macro": 0.5468763876730229
+  },
+  "test": {
+    "accuracy": 0.392,
+    "macro_precision": 0.3988888888888889,
+    "macro_recall": 0.3924019607843137,
+    "macro_f1": 0.39305555555555555,
+    "weighted_precision": 0.40026666666666666,
+    "weighted_recall": 0.392,
+    "weighted_f1": 0.39358333333333334,
+    "confusion_matrix_labels": [
+      "lose",
+      "tie",
+      "win"
+    ],
+    "confusion_matrix": [
+      [
+        65,
+        67,
+        38
+      ],
+      [
+        47,
+        66,
+        47
+      ],
+      [
+        38,
+        67,
+        65
+      ]
+    ],
+    "per_class": {
+      "lose": {
+        "precision": 0.43333333333333335,
+        "recall": 0.38235294117647056,
+        "f1": 0.40625,
+        "support": 170
+      },
+      "tie": {
+        "precision": 0.33,
+        "recall": 0.4125,
+        "f1": 0.36666666666666664,
+        "support": 160
+      },
+      "win": {
+        "precision": 0.43333333333333335,
+        "recall": 0.38235294117647056,
+        "f1": 0.40625,
+        "support": 170
+      }
+    },
+    "roc_auc_ovr_macro": 0.5376905080213904
+  }
+}
