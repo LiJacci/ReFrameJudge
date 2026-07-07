@@ -157,9 +157,10 @@ def safe_correlation(fn, y_true, y_pred):
 
 
 def regression_metrics(y_true, y_pred):
+    mse = float(mean_squared_error(y_true, y_pred))
     return {
         "mae": float(mean_absolute_error(y_true, y_pred)),
-        "rmse": float(mean_squared_error(y_true, y_pred, squared=False)),
+        "rmse": float(math.sqrt(max(mse, 0.0))),
         "pearson": safe_correlation(pearsonr, y_true, y_pred),
         "spearman": safe_correlation(spearmanr, y_true, y_pred),
         "target_summary": score_summary(y_true),
