@@ -1,0 +1,2980 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CLIP Threshold 3-way Error Review</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --panel: #ffffff;
+      --border: #d9dde5;
+      --text: #1f2937;
+      --muted: #667085;
+      --tp: #d8f3dc;
+      --tn: #dbeafe;
+      --fp: #fee2e2;
+      --fn: #fef3c7;
+      --err: #ffe4cc;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.96);
+    }
+    h1 { margin: 0; font-size: 20px; }
+    .sub { margin-top: 4px; color: var(--muted); font-size: 13px; }
+    main { max-width: 1280px; margin: 0 auto; padding: 20px; }
+    .sample {
+      margin-bottom: 18px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      overflow: hidden;
+    }
+    .sample.tp .meta { background: var(--tp); }
+    .sample.tn .meta { background: var(--tn); }
+    .sample.fp .meta { background: var(--fp); }
+    .sample.fn .meta { background: var(--fn); }
+    .sample.err .meta { background: var(--err); }
+    .meta {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) 90px 120px 120px minmax(220px, 1fr);
+      gap: 12px;
+      align-items: center;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+    .bucket { font-weight: 800; }
+    .images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    figure { margin: 0; padding: 12px; background: #fff; }
+    img {
+      display: block;
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #f1f3f5;
+    }
+    figcaption {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+    .details {
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    @media (max-width: 760px) {
+      .meta { grid-template-columns: 1fr 64px; }
+      .images { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>CLIP Threshold 3-way Error Review</h1>
+    <div class="sub">120 sampled predictions. ERROR: 120</div>
+  </header>
+  <main>
+    
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>1. rfj_fcdb_000032</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.1665, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000032_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000032_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=14420219, pair_index=5, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>2. rfj_fcdb_000125</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.7937, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000125_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000125_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>3. rfj_fcdb_000126</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.7935, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000126_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000126_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=2, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>4. rfj_fcdb_000130</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.8692, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000130_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000130_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=4, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>5. rfj_fcdb_000131</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.0465, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000131_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000131_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=5, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>6. rfj_fcdb_000137</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 3.2080, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000137_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000137_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=8, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>7. rfj_fcdb_000138</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -3.2078, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000138_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000138_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5123207448, pair_index=8, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>8. rfj_fcdb_000147</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 7.3906, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000147_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000147_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15961409258, pair_index=3, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>9. rfj_fcdb_000162</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.4348, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000162_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000162_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10944401125, pair_index=0, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>10. rfj_fcdb_000164</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.8466, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000164_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000164_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10944401125, pair_index=1, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>11. rfj_fcdb_000169</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.3144, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000169_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000169_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10944401125, pair_index=4, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>12. rfj_fcdb_000441</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.0596, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000441_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000441_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=0, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>13. rfj_fcdb_000445</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.1717, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000445_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000445_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=2, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>14. rfj_fcdb_000450</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.8621, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000450_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000450_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=4, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>15. rfj_fcdb_000452</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.1965, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000452_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000452_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=5, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>16. rfj_fcdb_000454</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.0622, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000454_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000454_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=6, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>17. rfj_fcdb_000457</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.2097, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000457_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000457_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3579364195, pair_index=8, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>18. rfj_fcdb_000476</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.4021, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000476_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000476_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5755997394, pair_index=7, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>19. rfj_fcdb_000524</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.6819, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000524_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000524_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8062088404, pair_index=1, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>20. rfj_fcdb_000568</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.0793, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000568_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000568_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2199328642, pair_index=3, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>21. rfj_fcdb_000570</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.0630, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000570_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000570_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2199328642, pair_index=4, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>22. rfj_fcdb_000580</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.6547, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000580_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000580_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2199328642, pair_index=9, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>23. rfj_fcdb_000702</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.8805, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000702_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000702_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4301604363, pair_index=0, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>24. rfj_fcdb_000704</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.1407, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000704_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000704_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4301604363, pair_index=1, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>25. rfj_fcdb_000712</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.3429, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000712_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000712_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4301604363, pair_index=5, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>26. rfj_fcdb_000791</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.5815, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000791_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000791_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10325183785, pair_index=5, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>27. rfj_fcdb_000800</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.9161, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000800_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000800_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10325183785, pair_index=9, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>28. rfj_fcdb_000812</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.3448, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000812_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000812_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5321157581, pair_index=5, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>29. rfj_fcdb_000817</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 5.5802, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_000817_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_000817_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5321157581, pair_index=8, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>30. rfj_fcdb_001001</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.1276, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001001_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001001_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=0, source_votes=5, edit_votes=0. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>31. rfj_fcdb_001002</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.1276, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001002_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001002_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=0, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>32. rfj_fcdb_001005</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.5897, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001005_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001005_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>33. rfj_fcdb_001011</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.9127, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001011_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001011_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=5, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>34. rfj_fcdb_001015</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.4168, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001015_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001015_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=7, source_votes=5, edit_votes=0. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>35. rfj_fcdb_001016</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.4168, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001016_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001016_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4211286840, pair_index=7, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>36. rfj_fcdb_001104</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.2847, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001104_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001104_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=22531710197, pair_index=1, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>37. rfj_fcdb_001120</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.0219, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001120_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001120_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=22531710197, pair_index=9, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>38. rfj_fcdb_001125</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.0888, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001125_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001125_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=19360027811, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>39. rfj_fcdb_001143</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.9799, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001143_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001143_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3886467178, pair_index=1, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>40. rfj_fcdb_001144</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.9798, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001144_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001144_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3886467178, pair_index=1, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>41. rfj_fcdb_001151</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.8497, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001151_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001151_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3886467178, pair_index=5, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>42. rfj_fcdb_001152</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.8498, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001152_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001152_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3886467178, pair_index=5, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>43. rfj_fcdb_001155</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.6849, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001155_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001155_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3886467178, pair_index=7, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>44. rfj_fcdb_001187</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.6796, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001187_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001187_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15747766454, pair_index=3, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>45. rfj_fcdb_001189</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.1909, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001189_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001189_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15747766454, pair_index=4, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>46. rfj_fcdb_001197</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.1691, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001197_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001197_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15747766454, pair_index=8, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>47. rfj_fcdb_001199</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -6.5605, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001199_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001199_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15747766454, pair_index=9, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>48. rfj_fcdb_001408</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.9900, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001408_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001408_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8715261793, pair_index=3, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>49. rfj_fcdb_001433</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.2420, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001433_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001433_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5410671051, pair_index=6, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>50. rfj_fcdb_001439</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.5137, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001439_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001439_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5410671051, pair_index=9, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>51. rfj_fcdb_001725</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.9115, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001725_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001725_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=13312195854, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>52. rfj_fcdb_001735</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.2579, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001735_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001735_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=13312195854, pair_index=7, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>53. rfj_fcdb_001750</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.3491, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001750_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001750_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2042696446, pair_index=4, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>54. rfj_fcdb_001752</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.2487, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001752_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001752_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2042696446, pair_index=5, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>55. rfj_fcdb_001754</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.5122, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001754_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001754_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2042696446, pair_index=6, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>56. rfj_fcdb_001757</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 4.2685, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001757_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001757_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2042696446, pair_index=8, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>57. rfj_fcdb_001760</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.1278, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_001760_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_001760_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2042696446, pair_index=9, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>58. rfj_fcdb_002150</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.5892, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002150_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002150_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6319551297, pair_index=4, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>59. rfj_fcdb_002157</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 7.4515, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002157_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002157_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6319551297, pair_index=8, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>60. rfj_fcdb_002295</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.6090, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002295_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002295_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5638668425, pair_index=7, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>61. rfj_fcdb_002300</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.2118, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002300_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002300_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5638668425, pair_index=9, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>62. rfj_fcdb_002781</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.7485, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002781_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002781_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=11579722535, pair_index=0, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>63. rfj_fcdb_002783</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 3.1817, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002783_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002783_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=11579722535, pair_index=1, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>64. rfj_fcdb_002870</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 2.8857, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002870_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002870_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6170771700, pair_index=4, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>65. rfj_fcdb_002879</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.6305, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_002879_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_002879_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6170771700, pair_index=9, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>66. rfj_fcdb_003013</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.2234, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003013_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003013_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1450945425, pair_index=6, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>67. rfj_fcdb_003014</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.2235, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003014_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003014_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1450945425, pair_index=6, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>68. rfj_fcdb_003021</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.2255, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003021_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003021_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=4458394677, pair_index=0, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>69. rfj_fcdb_003262</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.7214, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003262_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003262_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5120859921, pair_index=0, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>70. rfj_fcdb_003275</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -3.2018, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003275_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003275_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=5120859921, pair_index=7, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>71. rfj_fcdb_003464</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -5.2620, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003464_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003464_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10769837753, pair_index=1, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>72. rfj_fcdb_003465</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.9767, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003465_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003465_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10769837753, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>73. rfj_fcdb_003466</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.9766, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003466_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003466_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10769837753, pair_index=2, source_votes=5, edit_votes=0. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>74. rfj_fcdb_003474</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.1853, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003474_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003474_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10769837753, pair_index=6, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>75. rfj_fcdb_003477</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 2.6757, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003477_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003477_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=10769837753, pair_index=8, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>76. rfj_fcdb_003562</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.4019, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003562_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003562_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15863687784, pair_index=0, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>77. rfj_fcdb_003572</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -5.5146, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003572_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003572_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15863687784, pair_index=5, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>78. rfj_fcdb_003591</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.2298, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003591_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003591_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2877019418, pair_index=5, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>79. rfj_fcdb_003600</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.0223, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003600_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003600_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2877019418, pair_index=9, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>80. rfj_fcdb_003672</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.7191, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003672_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003672_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8585778497, pair_index=5, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>81. rfj_fcdb_003673</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.9581, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003673_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003673_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8585778497, pair_index=6, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>82. rfj_fcdb_003775</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.0616, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003775_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003775_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1488603583, pair_index=7, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>83. rfj_fcdb_003776</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.0616, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003776_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003776_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1488603583, pair_index=7, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>84. rfj_fcdb_003778</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.3599, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003778_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003778_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1488603583, pair_index=8, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>85. rfj_fcdb_003783</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.4952, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003783_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003783_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=1, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>86. rfj_fcdb_003786</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 2.2029, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003786_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003786_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=2, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>87. rfj_fcdb_003790</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.1751, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003790_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003790_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=4, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>88. rfj_fcdb_003792</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.2457, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003792_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003792_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=5, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>89. rfj_fcdb_003796</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.8381, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003796_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003796_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=7, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>90. rfj_fcdb_003800</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.5292, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003800_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003800_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=2545039943, pair_index=9, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>91. rfj_fcdb_003888</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.5093, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003888_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003888_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1875472091, pair_index=3, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>92. rfj_fcdb_003897</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.2018, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003897_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003897_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=1875472091, pair_index=8, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>93. rfj_fcdb_003905</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 3.6079, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003905_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003905_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8631160559, pair_index=2, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>94. rfj_fcdb_003919</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.4714, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_003919_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_003919_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8631160559, pair_index=9, source_votes=2, edit_votes=3. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>95. rfj_fcdb_004127</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.4124, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004127_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004127_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8504226368, pair_index=3, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>96. rfj_fcdb_004132</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.6297, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004132_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004132_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=8504226368, pair_index=5, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>97. rfj_fcdb_004150</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 2.4528, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004150_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004150_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6124790801, pair_index=4, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>98. rfj_fcdb_004154</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.1187, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004154_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004154_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=6124790801, pair_index=6, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>99. rfj_fcdb_004561</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -3.3224, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004561_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004561_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=16025151662, pair_index=0, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>100. rfj_fcdb_004562</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 3.3224, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004562_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004562_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=16025151662, pair_index=0, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>101. rfj_fcdb_004576</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.1539, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004576_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004576_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=16025151662, pair_index=7, source_votes=1, edit_votes=4. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>102. rfj_fcdb_004592</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.2032, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004592_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004592_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=373221129, pair_index=5, source_votes=2, edit_votes=3. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>103. rfj_fcdb_004595</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.3884, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004595_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004595_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=373221129, pair_index=7, source_votes=5, edit_votes=0. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>104. rfj_fcdb_004596</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 1.3882, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004596_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004596_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=373221129, pair_index=7, source_votes=0, edit_votes=5. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>105. rfj_fcdb_004661</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.4686, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004661_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004661_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=18447556469, pair_index=0, source_votes=4, edit_votes=1. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>106. rfj_fcdb_004679</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.5566, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004679_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004679_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=18447556469, pair_index=9, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>107. rfj_fcdb_004726</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -6.0955, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004726_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004726_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3754883861, pair_index=2, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>108. rfj_fcdb_004729</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.0113, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004729_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004729_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3754883861, pair_index=4, source_votes=5, edit_votes=0. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>109. rfj_fcdb_004814</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -13.9274, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004814_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004814_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3795215261, pair_index=6, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>110. rfj_fcdb_004818</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -5.7994, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004818_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004818_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3795215261, pair_index=8, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>111. rfj_fcdb_004820</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -4.2571, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004820_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004820_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=3795215261, pair_index=9, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>112. rfj_fcdb_004930</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -2.8906, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004930_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004930_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15137530922, pair_index=4, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>113. rfj_fcdb_004935</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.0550, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004935_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004935_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15137530922, pair_index=7, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>114. rfj_fcdb_004940</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>lose</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: 0.8958, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004940_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004940_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_worse</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=15137530922, pair_index=9, source_votes=4, edit_votes=1. source=crop_1, edit=crop_0, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>115. rfj_fcdb_004944</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>lose</strong></div>
+          <div>score: -3.4170, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004944_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004944_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=1, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>116. rfj_fcdb_004945</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.9296, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004945_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004945_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=2, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>117. rfj_fcdb_004947</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 4.7529, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004947_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004947_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=3, source_votes=3, edit_votes=2. source=crop_0, edit=crop_1, preference_strength=weak.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>118. rfj_fcdb_004951</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -1.4177, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004951_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004951_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=5, source_votes=1, edit_votes=4. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>119. rfj_fcdb_004957</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>win</strong></div>
+          <div>pred: <strong>tie</strong></div>
+          <div>score: -0.3750, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004957_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004957_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> better_crop</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=8, source_votes=0, edit_votes=5. source=crop_0, edit=crop_1, preference_strength=strong.</div>
+        </div>
+      </section>
+
+      <section class="sample err">
+        <div class="meta">
+          <div><strong>120. rfj_fcdb_004960</strong></div>
+          <div class="bucket">ERROR</div>
+          <div>true: <strong>tie</strong></div>
+          <div>pred: <strong>win</strong></div>
+          <div>score: 2.0531, tau: 1.9658</div>
+        </div>
+        <div class="images">
+          <figure>
+            <img src="../data/pairs/images/source/rfj_fcdb_004960_source.jpg" alt="source image">
+            <figcaption>source</figcaption>
+          </figure>
+          <figure>
+            <img src="../data/pairs/images/edit/rfj_fcdb_004960_edit.jpg" alt="edited image">
+            <figcaption>edited</figcaption>
+          </figure>
+        </div>
+        <div class="details">
+          <div><strong>tags:</strong> composition_not_improved</div>
+          <div><strong>notes:</strong> FCDB ranking pair. photo_id=9568277728, pair_index=9, source_votes=3, edit_votes=2. source=crop_1, edit=crop_0, preference_strength=weak.</div>
+        </div>
+      </section>
+
+  </main>
+</body>
+</html>
