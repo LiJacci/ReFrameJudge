@@ -29,7 +29,9 @@ def confusion_bucket(record):
         return "FP"
     if true_label == "win" and pred_label == "lose":
         return "FN"
-    return "OTHER"
+    if true_label == pred_label:
+        return f"CORRECT_{true_label.upper()}"
+    return "ERROR"
 
 
 def relative_path(target, start):
@@ -63,7 +65,22 @@ def css_class(bucket):
         "TN": "tn",
         "FP": "fp",
         "FN": "fn",
+        "ERROR": "err",
     }.get(bucket, "")
+
+
+def probability_text(record):
+    if "prob_win" in record:
+        return f"prob_win: {record['prob_win']:.4f}"
+    if "class_probabilities" in record:
+        parts = [
+            f"{label}: {probability:.4f}"
+            for label, probability in sorted(record["class_probabilities"].items())
+        ]
+        return "probs: " + ", ".join(parts)
+    if "confidence" in record:
+        return f"confidence: {record['confidence']:.4f}"
+    return "confidence: n/a"
 
 
 def build_html(records, project_root, output_path, title):
@@ -86,7 +103,7 @@ def build_html(records, project_root, output_path, title):
           <div class="bucket">{bucket}</div>
           <div>true: <strong>{html.escape(record['true_label'])}</strong></div>
           <div>pred: <strong>{html.escape(record['pred_label'])}</strong></div>
-          <div>prob_win: {record['prob_win']:.4f}</div>
+          <div>{html.escape(probability_text(record))}</div>
         </div>
         <div class="images">
           <figure>
@@ -124,6 +141,7 @@ def build_html(records, project_root, output_path, title):
       --tn: #dbeafe;
       --fp: #fee2e2;
       --fn: #fef3c7;
+      --err: #ffe4cc;
     }}
     body {{
       margin: 0;
@@ -153,9 +171,10 @@ def build_html(records, project_root, output_path, title):
     .sample.tn .meta {{ background: var(--tn); }}
     .sample.fp .meta {{ background: var(--fp); }}
     .sample.fn .meta {{ background: var(--fn); }}
+    .sample.err .meta {{ background: var(--err); }}
     .meta {{
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) 64px 120px 120px 140px;
+      grid-template-columns: minmax(220px, 1fr) 90px 120px 120px minmax(220px, 1fr);
       gap: 12px;
       align-items: center;
       padding: 12px 14px;

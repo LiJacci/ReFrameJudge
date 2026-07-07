@@ -49,6 +49,18 @@ Run the FCDB strong-preference v2 baseline:
   --cache data/cache/clip_embeddings_fcdb_5k.npz
 ```
 
+Run the FCDB 3-way v2 baseline:
+
+```bash
+.venvR/bin/python baselines/clip_logreg_3way.py \
+  --train-jsonl data/pairs/annotations/fcdb_3way_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_3way_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_3way_test.jsonl \
+  --output-json outputs/clip_logreg_3way_fcdb_5k.json \
+  --predictions-jsonl outputs/clip_logreg_3way_fcdb_5k_predictions.jsonl \
+  --cache data/cache/clip_embeddings_fcdb_5k.npz
+```
+
 Build an error review page from validation/test predictions:
 
 ```bash
@@ -59,6 +71,18 @@ Build an error review page from validation/test predictions:
   --buckets FP FN \
   --sample-size 100 \
   --title "CLIP LogReg Error Review"
+```
+
+Build a 3-way error review page:
+
+```bash
+.venvR/bin/python scripts/build_error_review_html.py \
+  --predictions outputs/clip_logreg_3way_fcdb_5k_predictions.jsonl \
+  --output outputs/clip_logreg_3way_error_review.html \
+  --project-root . \
+  --buckets ERROR \
+  --sample-size 120 \
+  --title "CLIP LogReg 3-way Error Review"
 ```
 
 ## DINOv3/DINOv2 + Logistic Regression
