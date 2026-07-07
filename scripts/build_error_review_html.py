@@ -70,6 +70,11 @@ def css_class(bucket):
 
 
 def probability_text(record):
+    if "preference_score" in record:
+        return (
+            f"score: {record['preference_score']:.4f}, "
+            f"tau: {record.get('tie_threshold', 0.0):.4f}"
+        )
     if "prob_win" in record:
         return f"prob_win: {record['prob_win']:.4f}"
     if "class_probabilities" in record:
