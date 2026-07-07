@@ -73,6 +73,18 @@ Run the FCDB threshold-calibrated 3-way baseline:
   --cache data/cache/clip_embeddings_fcdb_5k.npz
 ```
 
+Run the FCDB score-regression baseline:
+
+```bash
+.venvR/bin/python baselines/clip_score_regression.py \
+  --train-jsonl data/pairs/annotations/fcdb_3way_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_3way_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_3way_test.jsonl \
+  --output-json outputs/clip_score_regression_fcdb_5k.json \
+  --predictions-jsonl outputs/clip_score_regression_fcdb_5k_predictions.jsonl \
+  --cache data/cache/clip_embeddings_fcdb_5k.npz
+```
+
 Build an error review page from validation/test predictions:
 
 ```bash
@@ -107,6 +119,18 @@ Build a threshold-calibrated 3-way error review page:
   --buckets ERROR \
   --sample-size 120 \
   --title "CLIP Threshold 3-way Error Review"
+```
+
+Build a score-regression error review page:
+
+```bash
+.venvR/bin/python scripts/build_error_review_html.py \
+  --predictions outputs/clip_score_regression_fcdb_5k_predictions.jsonl \
+  --output outputs/clip_score_regression_error_review.html \
+  --project-root . \
+  --buckets ERROR \
+  --sample-size 120 \
+  --title "CLIP Score Regression Error Review"
 ```
 
 ## DINOv3/DINOv2 + Logistic Regression

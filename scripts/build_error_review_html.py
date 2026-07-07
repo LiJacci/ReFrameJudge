@@ -70,6 +70,13 @@ def css_class(bucket):
 
 
 def probability_text(record):
+    if "predicted_score" in record:
+        return (
+            f"target: {record.get('target_score', 0.0):.3f}, "
+            f"pred: {record['predicted_score']:.3f}, "
+            f"thr: [{record.get('low_threshold', 0.0):.3f}, "
+            f"{record.get('high_threshold', 0.0):.3f}]"
+        )
     if "preference_score" in record:
         return (
             f"score: {record['preference_score']:.4f}, "
