@@ -68,3 +68,14 @@ Observed patterns:
 3. CLIP tends to prefer tighter, more centered crops even when humans prefer more context.
 4. Reverse samples can fail as a pair, meaning the learned preference direction is flipped.
 ```
+
+## CLIP + DINOv2 Feature Fusion
+
+Status: script added in `baselines/fusion_logreg.py`.
+
+This baseline requires both precomputed embedding caches:
+
+```text
+data/cache/clip_embeddings_fcdb_5k.npz
+data/cache/dinov2_base_embeddings_fcdb_5k.npz
+```

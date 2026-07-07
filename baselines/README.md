@@ -78,3 +78,19 @@ Run DINOv2 fallback:
   --output-json outputs/dinov2_logreg_fcdb_5k.json \
   --predictions-jsonl outputs/dinov2_logreg_fcdb_5k_predictions.jsonl
 ```
+
+## CLIP + DINOv2 Feature Fusion
+
+Run this after generating both CLIP and DINOv2 embedding caches:
+
+```bash
+.venvR/bin/python baselines/fusion_logreg.py \
+  --train-jsonl data/pairs/annotations/fcdb_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_test.jsonl \
+  --clip-cache data/cache/clip_embeddings_fcdb_5k.npz \
+  --vision-cache data/cache/dinov2_base_embeddings_fcdb_5k.npz \
+  --vision-name dinov2-base \
+  --output-json outputs/clip_dinov2_fusion_logreg_fcdb_5k.json \
+  --predictions-jsonl outputs/clip_dinov2_fusion_logreg_fcdb_5k_predictions.jsonl
+```
