@@ -153,7 +153,12 @@ def main():
     parser.add_argument("--project-root", type=Path, default=Path("."))
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--cache", type=Path, default=Path("data/cache/clip_embeddings_fcdb_5k.npz"))
-    parser.add_argument("--model-name", default="openai/clip-vit-base-patch32")
+    parser.add_argument(
+        "--model-name",
+        default="data/cache/clip-vit-base-patch32",
+        help="Hugging Face model id or local directory containing CLIP weights/config/tokenizer files.",
+    )
+    parser.add_argument("--hf-cache-dir", type=Path, default=Path("data/cache/huggingface"))
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--max-train", type=int)
@@ -171,8 +176,14 @@ def main():
     device = resolve_device(args.device)
     print(f"Using device: {device}")
     print(f"Loading CLIP: {args.model_name}")
-    processor = CLIPProcessor.from_pretrained(args.model_name)
-    clip_model = CLIPModel.from_pretrained(args.model_name).to(device)
+    processor = CLIPProcessor.from_pretrained(
+        args.model_name,
+        cache_dir=args.hf_cache_dir,
+    )
+    clip_model = CLIPModel.from_pretrained(
+        args.model_name,
+        cache_dir=args.hf_cache_dir,
+    ).to(device)
 
     paths = unique_image_paths(train_records, val_records, test_records)
     embedding_map = load_cache(args.cache)

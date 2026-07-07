@@ -41,3 +41,4 @@ wandb/
 *.tgz
 *.rar
 *.7z
+.venvR/
