@@ -1,0 +1,56 @@
+{
+  "model": "vision_logreg",
+  "vision_model": "data/cache/dinov2-base",
+  "pooling": "auto",
+  "device": "cuda",
+  "feature_dim": 3072,
+  "records": {
+    "train": 4000,
+    "val": 500,
+    "test": 500
+  },
+  "logreg": {
+    "C": 0.1,
+    "solver": "liblinear"
+  },
+  "label_mapping": {
+    "lose": 0,
+    "win": 1
+  },
+  "val": {
+    "accuracy": 0.56,
+    "precision": 0.56,
+    "recall": 0.56,
+    "f1": 0.56,
+    "macro_f1": 0.56,
+    "roc_auc": 0.584064,
+    "confusion_matrix": [
+      [
+        140,
+        110
+      ],
+      [
+        110,
+        140
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.616,
+    "precision": 0.616,
+    "recall": 0.616,
+    "f1": 0.616,
+    "macro_f1": 0.616,
+    "roc_auc": 0.634336,
+    "confusion_matrix": [
+      [
+        154,
+        96
+      ],
+      [
+        96,
+        154
+      ]
+    ]
+  }
+}
