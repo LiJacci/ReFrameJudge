@@ -7,7 +7,6 @@ more votes is treated as the better composition.
 
 import argparse
 import json
-import shutil
 from pathlib import Path
 
 
@@ -83,6 +82,32 @@ def score_from_votes(vote_a, vote_b, max_abs_score=2):
     return round(max(-max_abs_score, min(max_abs_score, normalized * max_abs_score)), 3)
 
 
+def preference_strength(vote_a, vote_b):
+    margin = abs(vote_b - vote_a)
+    if margin >= 3:
+        return "strong"
+    if margin >= 1:
+        return "weak"
+    return "tie"
+
+
+def should_keep_pair(vote_a, vote_b, preference_filter):
+    strength = preference_strength(vote_a, vote_b)
+    if preference_filter == "all":
+        return True
+    return strength == preference_filter
+
+
+def crop_metadata(crop):
+    x, y, width, height = crop
+    return {
+        "x": int(x),
+        "y": int(y),
+        "width": int(width),
+        "height": int(height),
+    }
+
+
 def make_record(
     sample_id,
     source_rel,
@@ -93,7 +118,16 @@ def make_record(
     vote_edit,
     photo_id,
     pair_index,
+    source_crop_name,
+    edit_crop_name,
+    source_crop,
+    edit_crop,
+    original_image,
 ):
+    vote_margin = int(vote_edit - vote_source)
+    abs_vote_margin = abs(vote_margin)
+    strength = preference_strength(vote_source, vote_edit)
+
     if label == "win":
         composition_gain = 4 if improvement_score < 1.5 else 5
         issue_tags = ["better_crop"]
@@ -116,6 +150,18 @@ def make_record(
         "content_preservation": 5,
         "visual_naturalness": 5,
         "issue_tags": issue_tags,
+        "photo_id": str(photo_id),
+        "pair_index": int(pair_index),
+        "source_crop_name": source_crop_name,
+        "edited_crop_name": edit_crop_name,
+        "source_crop": crop_metadata(source_crop),
+        "edited_crop": crop_metadata(edit_crop),
+        "source_votes": int(vote_source),
+        "edited_votes": int(vote_edit),
+        "vote_margin": vote_margin,
+        "abs_vote_margin": abs_vote_margin,
+        "preference_strength": strength,
+        "original_image": original_image,
         "notes": (
             f"FCDB ranking pair. photo_id={photo_id}, pair_index={pair_index}, "
             f"source_votes={vote_source}, edit_votes={vote_edit}."
@@ -136,6 +182,7 @@ def build_pairs(args):
     records = []
     missing_images = 0
     created = 0
+    considered_emissions = 0
 
     for image_index, image_record in enumerate(data):
         if args.max_images is not None and image_index >= args.max_images:
@@ -166,12 +213,20 @@ def build_pairs(args):
                 pairs_to_emit.append(("crop_1", crop_1, vote_1, "crop_0", crop_0, vote_0))
 
             for source_name, source_crop, source_votes, edit_name, edit_crop, edit_votes in pairs_to_emit:
+                if args.max_source_records is not None and considered_emissions >= args.max_source_records:
+                    break
+                considered_emissions += 1
+                if not should_keep_pair(source_votes, edit_votes, args.preference_filter):
+                    continue
                 if args.max_pairs is not None and created >= args.max_pairs:
                     break
 
                 label, _ = label_from_votes(source_votes, edit_votes, args.tie_margin)
+                if args.label_weak_as_tie and preference_strength(source_votes, edit_votes) == "weak":
+                    label = "tie"
                 improvement_score = score_from_votes(source_votes, edit_votes)
-                sample_id = f"rfj_fcdb_{created + 1:06d}"
+                id_number = considered_emissions if args.preserve_source_ids else created + 1
+                sample_id = f"{args.id_prefix}_{id_number:06d}"
 
                 source_filename = f"{sample_id}_source.jpg"
                 edit_filename = f"{sample_id}_edit.jpg"
@@ -193,12 +248,25 @@ def build_pairs(args):
                     edit_votes,
                     photo_id,
                     pair_index,
+                    source_name,
+                    edit_name,
+                    source_crop,
+                    edit_crop,
+                    str(source_image) if source_image is not None else "",
                 )
-                record["notes"] += f" source={source_name}, edit={edit_name}."
+                record["notes"] += (
+                    f" source={source_name}, edit={edit_name}, "
+                    f"preference_strength={record['preference_strength']}."
+                )
                 records.append(record)
                 created += 1
 
+            if args.max_source_records is not None and considered_emissions >= args.max_source_records:
+                break
+
         if args.max_pairs is not None and created >= args.max_pairs:
+            break
+        if args.max_source_records is not None and considered_emissions >= args.max_source_records:
             break
 
     with output_jsonl.open("w", encoding="utf-8") as handle:
@@ -208,6 +276,7 @@ def build_pairs(args):
     return {
         "records": len(records),
         "missing_images": missing_images,
+        "considered_emissions": considered_emissions,
         "output_jsonl": str(output_jsonl),
     }
 
@@ -220,9 +289,35 @@ def main():
     parser.add_argument("--output-image-dir", type=Path, default=Path("data/pairs/images"))
     parser.add_argument("--max-images", type=int)
     parser.add_argument("--max-pairs", type=int)
+    parser.add_argument(
+        "--max-source-records",
+        type=int,
+        help=(
+            "Stop after this many emitted source/edit directions have been considered "
+            "before preference filtering. Useful for creating v2 subsets that reuse "
+            "the original rfj_fcdb_000001.. image crops."
+        ),
+    )
     parser.add_argument("--min-vote-margin", type=int, default=1)
     parser.add_argument("--tie-margin", type=int, default=0)
+    parser.add_argument(
+        "--preference-filter",
+        choices=["all", "strong", "weak", "tie"],
+        default="all",
+        help="Keep all FCDB comparisons, only 4:1/5:0 strong comparisons, weak 3:2 comparisons, or exact ties.",
+    )
+    parser.add_argument(
+        "--label-weak-as-tie",
+        action="store_true",
+        help="Map weak 3:2 / 2:3 preferences to tie labels for 3-way experiments.",
+    )
     parser.add_argument("--include-reverse", action="store_true")
+    parser.add_argument("--id-prefix", default="rfj_fcdb")
+    parser.add_argument(
+        "--preserve-source-ids",
+        action="store_true",
+        help="Use the pre-filter emission index in ids instead of compact output ids.",
+    )
     parser.add_argument(
         "--metadata-only",
         action="store_true",

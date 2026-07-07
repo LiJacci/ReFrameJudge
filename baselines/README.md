@@ -37,6 +37,18 @@ Run the full FCDB 5k baseline:
   --predictions-jsonl outputs/clip_logreg_fcdb_5k_predictions.jsonl
 ```
 
+Run the FCDB strong-preference v2 baseline:
+
+```bash
+.venvR/bin/python baselines/clip_logreg.py \
+  --train-jsonl data/pairs/annotations/fcdb_strong_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_strong_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_strong_test.jsonl \
+  --output-json outputs/clip_logreg_fcdb_strong_5k.json \
+  --predictions-jsonl outputs/clip_logreg_fcdb_strong_5k_predictions.jsonl \
+  --cache data/cache/clip_embeddings_fcdb_5k.npz
+```
+
 Build an error review page from validation/test predictions:
 
 ```bash

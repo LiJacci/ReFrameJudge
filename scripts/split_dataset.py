@@ -30,6 +30,8 @@ def write_jsonl(path, records):
 
 
 def group_key(record):
+    if record.get("photo_id") is not None:
+        return f"photo_id:{record['photo_id']}"
     notes = record.get("notes", "")
     match = PHOTO_ID_RE.search(notes)
     if match:

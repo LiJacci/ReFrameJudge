@@ -71,6 +71,37 @@ lose
 
 `notes`: Optional free-text comment.
 
+## Recommended Pair Metadata
+
+Dataset adapters should keep source-specific metadata when available. These fields are optional for validation, but useful for debugging, filtering, and future evaluator training.
+
+FCDB v2 uses:
+
+```json
+{
+  "photo_id": "15251367120",
+  "pair_index": 0,
+  "source_crop_name": "crop_0",
+  "edited_crop_name": "crop_1",
+  "source_crop": {"x": 139, "y": 234, "width": 300, "height": 400},
+  "edited_crop": {"x": 171, "y": 281, "width": 300, "height": 400},
+  "source_votes": 4,
+  "edited_votes": 1,
+  "vote_margin": -3,
+  "abs_vote_margin": 3,
+  "preference_strength": "strong",
+  "original_image": "data/external/fcdb/images/example.jpg"
+}
+```
+
+`preference_strength`:
+
+```text
+strong: 4:1 or 5:0 FCDB vote split
+weak:   3:2 or 2:3 FCDB vote split
+tie:    equal vote split when available
+```
+
 ## Recommended Split Files
 
 ```text
@@ -78,4 +109,3 @@ data/pairs/annotations/train.jsonl
 data/pairs/annotations/val.jsonl
 data/pairs/annotations/test.jsonl
 ```
-

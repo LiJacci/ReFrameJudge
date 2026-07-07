@@ -87,6 +87,76 @@ python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_val.jsonl --root
 python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_test.jsonl --root . --check-images
 ```
 
+## Build FCDB v2 Splits
+
+FCDB v2 keeps structured crop and vote metadata for each pair:
+
+```text
+photo_id
+pair_index
+source_crop / edited_crop
+source_votes / edited_votes
+vote_margin / abs_vote_margin
+preference_strength
+```
+
+For the tracked FCDB 5k crop subset, reuse existing crop images by preserving the original pair ids and limiting to the first 5000 emitted source/edit directions:
+
+```bash
+python3 scripts/prepare_fcdb_pairs.py \
+  --annotation data/external/fcdb/ranking_annotation.json \
+  --image-dir data/external/fcdb/images \
+  --output-jsonl data/pairs/annotations/fcdb_strong_pairs_5k.jsonl \
+  --output-image-dir data/pairs/images \
+  --include-reverse \
+  --preference-filter strong \
+  --max-source-records 5000 \
+  --preserve-source-ids \
+  --metadata-only
+
+python3 scripts/split_dataset.py \
+  --input data/pairs/annotations/fcdb_strong_pairs_5k.jsonl \
+  --output-dir data/pairs/annotations \
+  --prefix fcdb_strong_ \
+  --seed 42
+```
+
+Create the 3-way variant by mapping weak 3:2 / 2:3 preferences to `tie`:
+
+```bash
+python3 scripts/prepare_fcdb_pairs.py \
+  --annotation data/external/fcdb/ranking_annotation.json \
+  --image-dir data/external/fcdb/images \
+  --output-jsonl data/pairs/annotations/fcdb_3way_pairs_5k.jsonl \
+  --output-image-dir data/pairs/images \
+  --include-reverse \
+  --preference-filter all \
+  --label-weak-as-tie \
+  --max-source-records 5000 \
+  --preserve-source-ids \
+  --metadata-only
+
+python3 scripts/split_dataset.py \
+  --input data/pairs/annotations/fcdb_3way_pairs_5k.jsonl \
+  --output-dir data/pairs/annotations \
+  --prefix fcdb_3way_ \
+  --seed 42
+```
+
+Validate all v2 files:
+
+```bash
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_strong_pairs_5k.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_strong_train.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_strong_val.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_strong_test.jsonl --root . --check-images
+
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_3way_pairs_5k.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_3way_train.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_3way_val.jsonl --root . --check-images
+python3 scripts/validate_dataset.py data/pairs/annotations/fcdb_3way_test.jsonl --root . --check-images
+```
+
 ## Build Review HTML
 
 Create a visual review page for manual quality control:
