@@ -29,6 +29,7 @@ from transformers import CLIPModel, CLIPProcessor
 
 
 LABEL_TO_ID = {"lose": 0, "win": 1}
+ID_TO_LABEL = {value: key for key, value in LABEL_TO_ID.items()}
 
 
 def read_jsonl(path, max_samples=None):
@@ -145,6 +146,42 @@ def evaluate(model, x, y):
     return metrics
 
 
+def predict_records(model, records, x, y, split):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        pred = model.predict(x)
+        probabilities = model.predict_proba(x)[:, 1]
+
+    predictions = []
+    for record, true_id, pred_id, prob_win in zip(records, y, pred, probabilities):
+        predictions.append(
+            {
+                "id": record["id"],
+                "split": split,
+                "source_image": record["source_image"],
+                "edited_image": record["edited_image"],
+                "true_label": ID_TO_LABEL[int(true_id)],
+                "pred_label": ID_TO_LABEL[int(pred_id)],
+                "prob_win": float(prob_win),
+                "correct": bool(int(true_id) == int(pred_id)),
+                "edit_type": record.get("edit_type", ""),
+                "improvement_score": record.get("improvement_score"),
+                "issue_tags": record.get("issue_tags", []),
+                "notes": record.get("notes", ""),
+            }
+        )
+    return predictions
+
+
+def write_jsonl(path, records):
+    if path is None:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        for record in records:
+            handle.write(json.dumps(record, ensure_ascii=True) + "\n")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--train-jsonl", type=Path, required=True)
@@ -152,6 +189,7 @@ def main():
     parser.add_argument("--test-jsonl", type=Path, required=True)
     parser.add_argument("--project-root", type=Path, default=Path("."))
     parser.add_argument("--output-json", type=Path, required=True)
+    parser.add_argument("--predictions-jsonl", type=Path)
     parser.add_argument("--cache", type=Path, default=Path("data/cache/clip_embeddings_fcdb_5k.npz"))
     parser.add_argument(
         "--model-name",
@@ -235,7 +273,17 @@ def main():
 
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(result, indent=2), encoding="utf-8")
+
+    if args.predictions_jsonl is not None:
+        predictions = []
+        predictions.extend(predict_records(classifier, val_records, x_val, y_val, "val"))
+        predictions.extend(predict_records(classifier, test_records, x_test, y_test, "test"))
+        write_jsonl(args.predictions_jsonl, predictions)
+
     print(json.dumps(result, indent=2))
+    del clip_model
+    if device.type == "mps":
+        torch.mps.empty_cache()
 
 
 if __name__ == "__main__":

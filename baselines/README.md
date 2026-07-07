@@ -20,6 +20,7 @@ Run a smoke test:
   --val-jsonl data/pairs/annotations/fcdb_val.jsonl \
   --test-jsonl data/pairs/annotations/fcdb_test.jsonl \
   --output-json outputs/clip_logreg_smoke.json \
+  --predictions-jsonl outputs/clip_logreg_smoke_predictions.jsonl \
   --max-train 200 \
   --max-val 100 \
   --max-test 100
@@ -32,5 +33,18 @@ Run the full FCDB 5k baseline:
   --train-jsonl data/pairs/annotations/fcdb_train.jsonl \
   --val-jsonl data/pairs/annotations/fcdb_val.jsonl \
   --test-jsonl data/pairs/annotations/fcdb_test.jsonl \
-  --output-json outputs/clip_logreg_fcdb_5k.json
+  --output-json outputs/clip_logreg_fcdb_5k.json \
+  --predictions-jsonl outputs/clip_logreg_fcdb_5k_predictions.jsonl
+```
+
+Build an error review page from validation/test predictions:
+
+```bash
+.venvR/bin/python scripts/build_error_review_html.py \
+  --predictions outputs/clip_logreg_fcdb_5k_predictions.jsonl \
+  --output outputs/clip_logreg_error_review.html \
+  --project-root . \
+  --buckets FP FN \
+  --sample-size 100 \
+  --title "CLIP LogReg Error Review"
 ```
