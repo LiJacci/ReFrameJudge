@@ -48,3 +48,33 @@ Build an error review page from validation/test predictions:
   --sample-size 100 \
   --title "CLIP LogReg Error Review"
 ```
+
+## DINOv3/DINOv2 + Logistic Regression
+
+DINOv3 is supported by Hugging Face Transformers 4.56+ but the official Meta weights may require accepting the model license before download. If DINOv3 access is unavailable, use DINOv2 as a fallback with `--model-name facebook/dinov2-base`.
+
+Run DINOv3:
+
+```bash
+.venvR/bin/python baselines/vision_logreg.py \
+  --train-jsonl data/pairs/annotations/fcdb_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_test.jsonl \
+  --model-name facebook/dinov3-vitb16-pretrain-lvd1689m \
+  --cache data/cache/dinov3_vitb16_embeddings_fcdb_5k.npz \
+  --output-json outputs/dinov3_logreg_fcdb_5k.json \
+  --predictions-jsonl outputs/dinov3_logreg_fcdb_5k_predictions.jsonl
+```
+
+Run DINOv2 fallback:
+
+```bash
+.venvR/bin/python baselines/vision_logreg.py \
+  --train-jsonl data/pairs/annotations/fcdb_train.jsonl \
+  --val-jsonl data/pairs/annotations/fcdb_val.jsonl \
+  --test-jsonl data/pairs/annotations/fcdb_test.jsonl \
+  --model-name facebook/dinov2-base \
+  --cache data/cache/dinov2_base_embeddings_fcdb_5k.npz \
+  --output-json outputs/dinov2_logreg_fcdb_5k.json \
+  --predictions-jsonl outputs/dinov2_logreg_fcdb_5k_predictions.jsonl
+```

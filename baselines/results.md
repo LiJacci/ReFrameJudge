@@ -48,3 +48,23 @@ test:
  [ 82,168]]
 ```
 
+## Error Review Sheets
+
+Date: 2026-07-07
+
+The first CLIP error review contains only FP/FN samples:
+
+```text
+outputs/clip_logreg_error_review.html
+outputs/analysis/fn_contact_sheet.jpg
+outputs/analysis/fp_contact_sheet.jpg
+```
+
+Observed patterns:
+
+```text
+1. Many errors are weak-preference pairs with 3:2 or 2:3 votes.
+2. CLIP often misses subtle composition-only shifts.
+3. CLIP tends to prefer tighter, more centered crops even when humans prefer more context.
+4. Reverse samples can fail as a pair, meaning the learned preference direction is flipped.
+```
