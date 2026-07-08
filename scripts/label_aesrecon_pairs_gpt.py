@@ -53,7 +53,7 @@ You will be given two real photographs from an aesthetics reconstruction dataset
 1. Lower-quality reference image
 2. Higher-quality candidate image
 
-The dataset defines the higher-quality candidate as the preferred image. Your task is not to choose a winner. Your task is to annotate whether this known preference is explained by photographic composition, and to describe the composition improvement.
+The dataset defines the higher-quality candidate as the preferred image. Your task is not to choose a winner. Your task is to annotate whether this known preference is actually explained by photographic composition, and to describe the composition improvement when it exists.
 
 Judge only composition-related changes:
 - framing and crop
@@ -82,10 +82,23 @@ Return only one valid JSON object:
 }
 
 Rules:
-- composition_relevance: whether the known preference is mainly about composition.
-- label_confidence: how confident you are in the composition annotation.
-- composition_score must be an integer from 0 to 2, where 0 means no clear composition improvement, 1 means slight/moderate improvement, and 2 means strong improvement.
-- composition_gain must be an integer from 3 to 5, where 3 means composition is similar, 4 means better, and 5 means much better.
+- composition_relevance:
+  - "high" only if the known preference is mainly explained by composition.
+  - "medium" if composition helps, but pose, lighting, color, sharpness, expression, or semantic content also matter clearly.
+  - "low" if composition is not a clear reason for the known preference.
+- label_confidence:
+  - "high" only when the composition evidence is obvious and unambiguous.
+  - "medium" when the improvement is plausible but mixed with non-composition factors.
+  - "low" when the pair is hard to judge or composition differences are weak.
+- composition_score must be an integer from 0 to 2:
+  - 0 means no clear composition improvement.
+  - 1 means slight or moderate composition improvement.
+  - 2 means strong composition improvement.
+- composition_gain must be an integer from 3 to 5:
+  - 3 means composition is similar or only marginally better.
+  - 4 means composition is clearly better.
+  - 5 means composition is dramatically better and should be used sparingly.
+- Do not give high/high/5 by default just because the candidate is the known preferred image.
 - Use positive_tags for composition improvements in the higher-quality candidate.
 - Use negative_tags for remaining composition issues in the higher-quality candidate, if any.
 """
@@ -391,6 +404,7 @@ def main():
                 "pair_type": "real_photo_aesthetic_pair",
                 "label_source": "dataset_direction+gpt_weak_composition_annotation",
                 "overall_label": "win",
+                "composition_score": parsed["composition_score"],
                 "improvement_score": parsed["composition_score"],
                 "composition_gain": parsed["composition_gain"],
                 "content_preservation": 5,
