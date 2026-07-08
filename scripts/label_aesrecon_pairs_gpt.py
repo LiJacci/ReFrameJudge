@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
-"""Label AesRecon test image pairs with an OpenAI vision model.
+"""Add GPT composition annotations to AesRecon good/poor pairs.
 
 The AesRecon test JSON maps a high-aesthetic image filename to a low-aesthetic
-image filename. For ReFrameJudge-style composition labeling, this script treats
-the low-aesthetic image as `source_image` and the high-aesthetic image as
-`edited_image`, while showing the model only blind Candidate A/B images.
+image filename. We use the dataset direction as the label:
+
+    poor image -> good image = win
+
+GPT is used to add weak composition annotations such as composition gain, tags,
+confidence, and rationale. It is not asked to decide the winner.
 """
 
 import argparse
@@ -20,15 +23,15 @@ from pathlib import Path
 from openai import OpenAI
 
 
-PROMPT = """You are an expert photographic composition judge.
+PROMPT = """You are an expert photographic composition annotator.
 
-You will be given two real photographs:
-1. Candidate A
-2. Candidate B
+You will be given two real photographs from an aesthetics reconstruction dataset:
+1. Lower-quality reference image
+2. Higher-quality candidate image
 
-Both images are real photographs. Judge only composition quality. Do not judge generated-image artifacts, realism, or content preservation. Do not assume either candidate is intended to be better.
+The dataset defines the higher-quality candidate as the preferred image. Your task is not to choose a winner. Your task is to annotate whether this known preference is explained by photographic composition, and to describe the composition improvement.
 
-Consider:
+Judge only composition-related changes:
 - framing and crop
 - subject placement and prominence
 - visual balance
@@ -36,21 +39,31 @@ Consider:
 - background cleanliness
 - leading lines, symmetry, rule of thirds, and visual focus when relevant
 
+Do not base the annotation mainly on:
+- semantic attractiveness of the subject
+- color grading alone
+- sharpness or resolution alone
+- lighting mood alone
+- whether the image content is more interesting
+
 Return only one valid JSON object:
 {
-  "choice": "A|B|tie",
-  "composition_score": -2,
-  "composition_gain": 1,
-  "issue_tags": [],
+  "composition_relevance": "high|medium|low",
+  "label_confidence": "high|medium|low",
+  "composition_score": 1,
+  "composition_gain": 4,
+  "positive_tags": [],
+  "negative_tags": [],
   "reason": ""
 }
 
 Rules:
-- Choose A if Candidate A has clearly better photographic composition.
-- Choose B if Candidate B has clearly better photographic composition.
-- Choose tie if neither candidate is clearly better, or the preference is mostly subjective.
-- composition_score must be an integer from -2 to 2, where negative favors A, positive favors B, and 0 means tie.
-- composition_gain must be an integer from 1 to 5, where 1 means Candidate B is much worse than Candidate A, 3 means similar, and 5 means Candidate B is much better than Candidate A.
+- composition_relevance: whether the known preference is mainly about composition.
+- label_confidence: how confident you are in the composition annotation.
+- composition_score must be an integer from 0 to 2, where 0 means no clear composition improvement, 1 means slight/moderate improvement, and 2 means strong improvement.
+- composition_gain must be an integer from 3 to 5, where 3 means composition is similar, 4 means better, and 5 means much better.
+- Use positive_tags for composition improvements in the higher-quality candidate.
+- Use negative_tags for remaining composition issues in the higher-quality candidate, if any.
 """
 
 
@@ -87,44 +100,28 @@ def image_data_url(path):
     return f"data:{mime_type};base64,{encoded}"
 
 
-def candidate_roles(pair_id, seed, shuffle_order):
-    if not shuffle_order:
-        return "poor", "good"
-    rng = random.Random(f"{seed}:{pair_id}")
-    if rng.random() < 0.5:
-        return "poor", "good"
-    return "good", "poor"
-
-
-def path_for_role(dataset_root, pair, role):
-    if role == "good":
+def image_path(dataset_root, pair, quality):
+    if quality == "good":
         return dataset_root / "images" / "good_images" / pair["good_image_name"]
-    if role == "poor":
+    if quality == "poor":
         return dataset_root / "images" / "poor_images" / pair["poor_image_name"]
-    raise ValueError(f"Unknown role: {role}")
+    raise ValueError(f"Unknown quality: {quality}")
 
 
-def label_from_choice(choice, candidate_a_role, candidate_b_role):
-    if choice == "tie":
-        return "tie"
-    winning_role = candidate_a_role if choice == "A" else candidate_b_role
-    return "win" if winning_role == "good" else "lose"
-
-
-def build_messages(prompt, candidate_a_path, candidate_b_path):
+def build_messages(prompt, poor_path, good_path):
     return [
         {
             "role": "system",
-            "content": "You are a strict image-pair composition evaluator. Return only valid JSON.",
+            "content": "You are a strict composition annotation assistant. Return only valid JSON.",
         },
         {
             "role": "user",
             "content": [
                 {"type": "text", "text": prompt},
-                {"type": "text", "text": "Candidate A:"},
-                {"type": "image_url", "image_url": {"url": image_data_url(candidate_a_path)}},
-                {"type": "text", "text": "Candidate B:"},
-                {"type": "image_url", "image_url": {"url": image_data_url(candidate_b_path)}},
+                {"type": "text", "text": "Lower-quality reference image:"},
+                {"type": "image_url", "image_url": {"url": image_data_url(poor_path)}},
+                {"type": "text", "text": "Higher-quality candidate image:"},
+                {"type": "image_url", "image_url": {"url": image_data_url(good_path)}},
             ],
         },
     ]
@@ -150,21 +147,33 @@ def clamp_int(value, minimum, maximum, default):
     return max(minimum, min(maximum, value))
 
 
+def normalize_level(value, valid_values, default):
+    value = str(value).strip().lower()
+    if value not in valid_values:
+        return default
+    return value
+
+
+def normalize_list(value):
+    return value if isinstance(value, list) else []
+
+
 def normalize_response(raw):
-    choice = str(raw.get("choice", "")).strip().upper()
-    if choice not in {"A", "B", "TIE"}:
-        score = clamp_int(raw.get("composition_score"), -2, 2, 0)
-        if score > 0:
-            choice = "B"
-        elif score < 0:
-            choice = "A"
-        else:
-            choice = "TIE"
     return {
-        "choice": "tie" if choice == "TIE" else choice,
-        "composition_score": clamp_int(raw.get("composition_score"), -2, 2, 0),
-        "composition_gain": clamp_int(raw.get("composition_gain"), 1, 5, 3),
-        "issue_tags": raw.get("issue_tags", []) if isinstance(raw.get("issue_tags", []), list) else [],
+        "composition_relevance": normalize_level(
+            raw.get("composition_relevance"),
+            {"high", "medium", "low"},
+            "medium",
+        ),
+        "label_confidence": normalize_level(
+            raw.get("label_confidence"),
+            {"high", "medium", "low"},
+            "medium",
+        ),
+        "composition_score": clamp_int(raw.get("composition_score"), 0, 2, 1),
+        "composition_gain": clamp_int(raw.get("composition_gain"), 3, 5, 4),
+        "positive_tags": normalize_list(raw.get("positive_tags", [])),
+        "negative_tags": normalize_list(raw.get("negative_tags", [])),
         "reason": str(raw.get("reason", "")),
     }
 
@@ -203,14 +212,22 @@ def write_summary(path, records, total_requested, skipped_existing):
     if path is None:
         return
     counts = {}
+    relevance_counts = {}
+    confidence_counts = {}
     for record in records:
         label = record.get("overall_label", "error")
         counts[label] = counts.get(label, 0) + 1
+        relevance = record.get("composition_relevance", "unknown")
+        relevance_counts[relevance] = relevance_counts.get(relevance, 0) + 1
+        confidence = record.get("label_confidence", "unknown")
+        confidence_counts[confidence] = confidence_counts.get(confidence, 0) + 1
     summary = {
         "records_written_this_run": len(records),
         "total_requested": total_requested,
         "skipped_existing": skipped_existing,
         "label_counts": counts,
+        "composition_relevance_counts": relevance_counts,
+        "label_confidence_counts": confidence_counts,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(summary, indent=2), encoding="utf-8")
@@ -236,8 +253,6 @@ def main():
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
     parser.add_argument("--max-samples", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--shuffle-order", action="store_true", default=True)
-    parser.add_argument("--no-shuffle-order", dest="shuffle_order", action="store_false")
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--retries", type=int, default=2)
@@ -273,26 +288,18 @@ def main():
                 skipped_existing += 1
                 continue
 
-            candidate_a_role, candidate_b_role = candidate_roles(
-                pair["id"],
-                args.seed,
-                args.shuffle_order,
-            )
-            candidate_a_path = path_for_role(args.dataset_root, pair, candidate_a_role)
-            candidate_b_path = path_for_role(args.dataset_root, pair, candidate_b_role)
-            good_path = path_for_role(args.dataset_root, pair, "good")
-            poor_path = path_for_role(args.dataset_root, pair, "poor")
+            good_path = image_path(args.dataset_root, pair, "good")
+            poor_path = image_path(args.dataset_root, pair, "poor")
+            for path in [poor_path, good_path]:
+                if not path.exists():
+                    raise FileNotFoundError(path)
 
-            for image_path in [candidate_a_path, candidate_b_path]:
-                if not image_path.exists():
-                    raise FileNotFoundError(image_path)
-
-            print(f"[{index}/{len(pairs)}] labeling {pair['id']}")
+            print(f"[{index}/{len(pairs)}] annotating {pair['id']}")
             try:
                 content, raw_response = call_model(
                     client,
                     args.model,
-                    build_messages(prompt, candidate_a_path, candidate_b_path),
+                    build_messages(prompt, poor_path, good_path),
                     args.temperature,
                     args.max_tokens,
                     args.retries,
@@ -306,39 +313,45 @@ def main():
                 content = ""
                 raw_response = {"error": str(exc)}
                 parsed = {
-                    "choice": "tie",
-                    "composition_score": 0,
+                    "composition_relevance": "low",
+                    "label_confidence": "low",
+                    "composition_score": 1,
                     "composition_gain": 3,
-                    "issue_tags": ["api_error"],
+                    "positive_tags": [],
+                    "negative_tags": ["api_error"],
                     "reason": str(exc),
                 }
                 error = str(exc)
 
-            label = label_from_choice(parsed["choice"], candidate_a_role, candidate_b_role)
+            issue_tags = list(parsed["positive_tags"]) + list(parsed["negative_tags"])
             record = {
                 "id": pair["id"],
                 "source_image": str(poor_path),
                 "edited_image": str(good_path),
                 "edit_type": "aesthetic_reconstruction",
                 "data_source": "AesRecon",
-                "overall_label": label,
+                "pair_type": "real_photo_aesthetic_pair",
+                "label_source": "dataset_direction+gpt_weak_composition_annotation",
+                "overall_label": "win",
                 "improvement_score": parsed["composition_score"],
                 "composition_gain": parsed["composition_gain"],
                 "content_preservation": 5,
                 "visual_naturalness": 5,
-                "issue_tags": parsed["issue_tags"],
+                "issue_tags": issue_tags,
+                "composition_relevance": parsed["composition_relevance"],
+                "label_confidence": parsed["label_confidence"],
+                "positive_tags": parsed["positive_tags"],
+                "negative_tags": parsed["negative_tags"],
                 "reason": parsed["reason"],
-                "candidate_a_image": str(candidate_a_path),
-                "candidate_b_image": str(candidate_b_path),
-                "candidate_a_role": candidate_a_role,
-                "candidate_b_role": candidate_b_role,
-                "choice": parsed["choice"],
+                "lower_quality_image": str(poor_path),
+                "higher_quality_image": str(good_path),
                 "good_image_name": pair["good_image_name"],
                 "poor_image_name": pair["poor_image_name"],
                 "expected_label": "win",
                 "error": error,
                 "notes": (
-                    "AesRecon good/poor pair. Label is GPT-composed composition judgment only; "
+                    "AesRecon good/poor pair. overall_label follows dataset direction "
+                    "(poor -> good = win). GPT adds weak composition annotations only. "
                     "content_preservation and visual_naturalness are fixed because both images are real photos."
                 ),
             }

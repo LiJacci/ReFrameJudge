@@ -110,13 +110,21 @@ python3 scripts/prepare_fcdb_pairs.py \
 ```
 ## AesRecon
 
-AesRecon can provide real-photo good/poor pairs for early ReFrameJudge-v1 composition-label experiments. The local test JSON is expected to map:
+AesRecon can provide real-photo good/poor pairs for an early ReFrameJudge-v1 composition subset. The local test JSON is expected to map:
 
 ```text
 good_image.jpg -> poor_image.jpg
 ```
 
-Label a small sample with an OpenAI vision model:
+For this subset, the dataset direction is used as the preference label:
+
+```text
+poor image -> good image = win
+```
+
+GPT is used only to add weak composition annotations. It is not asked to decide the winner.
+
+Annotate a small sample with an OpenAI vision model:
 
 ```bash
 export OPENAI_API_KEY="your_api_key"
@@ -131,4 +139,4 @@ python3 scripts/label_aesrecon_pairs_gpt.py \
   --continue-on-error
 ```
 
-The script treats the poor image as `source_image` and the good image as `edited_image`, but the model sees only blind `Candidate A` / `Candidate B` images. Labels focus only on composition improvement because all images are real photographs.
+The script treats the poor image as `source_image` and the good image as `edited_image`. Each output row has `overall_label=win` from the dataset direction, while GPT fills weak composition fields such as `composition_relevance`, `label_confidence`, `composition_gain`, `positive_tags`, `negative_tags`, and `reason`.
