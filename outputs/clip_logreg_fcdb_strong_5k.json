@@ -1,0 +1,55 @@
+{
+  "model": "clip_logreg",
+  "clip_model": "data/cache/clip-vit-base-patch32",
+  "device": "cuda",
+  "feature_dim": 2048,
+  "records": {
+    "train": 2422,
+    "val": 314,
+    "test": 286
+  },
+  "logreg": {
+    "C": 0.1,
+    "solver": "liblinear"
+  },
+  "label_mapping": {
+    "lose": 0,
+    "win": 1
+  },
+  "val": {
+    "accuracy": 0.6560509554140127,
+    "precision": 0.6560509554140127,
+    "recall": 0.6560509554140127,
+    "f1": 0.6560509554140127,
+    "macro_f1": 0.6560509554140127,
+    "roc_auc": 0.7045721935981175,
+    "confusion_matrix": [
+      [
+        103,
+        54
+      ],
+      [
+        54,
+        103
+      ]
+    ]
+  },
+  "test": {
+    "accuracy": 0.6363636363636364,
+    "precision": 0.6363636363636364,
+    "recall": 0.6363636363636364,
+    "f1": 0.6363636363636364,
+    "macro_f1": 0.6363636363636364,
+    "roc_auc": 0.672453420705169,
+    "confusion_matrix": [
+      [
+        91,
+        52
+      ],
+      [
+        52,
+        91
+      ]
+    ]
+  }
+}

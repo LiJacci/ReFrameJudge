@@ -1,0 +1,45 @@
+{
+  "model": "qwen_vlm_judge",
+  "qwen_model": "qwen3-vl-plus",
+  "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+  "input_jsonl": "data/pairs/annotations/fcdb_strong_test.jsonl",
+  "records": 286,
+  "judge_mode": "blind_ab",
+  "label_mode": "binary",
+  "shuffle_order": true,
+  "temperature": 0.0,
+  "metrics": {
+    "accuracy": 0.5384615384615384,
+    "macro_precision": 0.5388337530242433,
+    "macro_recall": 0.5384615384615384,
+    "macro_f1": 0.5373529411764706,
+    "confusion_matrix_labels": [
+      "lose",
+      "win"
+    ],
+    "confusion_matrix": [
+      [
+        84,
+        59
+      ],
+      [
+        73,
+        70
+      ]
+    ],
+    "per_class": {
+      "lose": {
+        "precision": 0.535031847133758,
+        "recall": 0.5874125874125874,
+        "f1": 0.56,
+        "support": 143
+      },
+      "win": {
+        "precision": 0.5426356589147286,
+        "recall": 0.48951048951048953,
+        "f1": 0.5147058823529411,
+        "support": 143
+      }
+    }
+  }
+}
