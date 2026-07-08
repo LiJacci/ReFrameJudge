@@ -99,6 +99,21 @@ Run the blind A/B test split:
   --continue-on-error
 ```
 
+Run the blind A/B binary test split:
+
+```bash
+.venvR/bin/python baselines/qwen_vlm_judge.py \
+  --input-jsonl data/pairs/annotations/fcdb_strong_test.jsonl \
+  --output-json outputs/qwen_blind_ab_binary_fcdb_strong_test.json \
+  --predictions-jsonl outputs/qwen_blind_ab_binary_fcdb_strong_test_predictions.jsonl \
+  --project-root . \
+  --model qwen3-vl-plus \
+  --label-mode binary \
+  --max-samples 286 \
+  --shuffle-order \
+  --continue-on-error
+```
+
 Build an error review page from validation/test predictions:
 
 ```bash
@@ -157,6 +172,18 @@ Build a blind Qwen A/B judge error review page:
   --buckets ERROR FP FN \
   --sample-size 120 \
   --title "Qwen Blind A/B Judge Error Review"
+```
+
+Build a blind Qwen binary judge error review page:
+
+```bash
+.venvR/bin/python scripts/build_error_review_html.py \
+  --predictions outputs/qwen_blind_ab_binary_fcdb_strong_test_predictions.jsonl \
+  --output outputs/qwen_blind_ab_binary_error_review.html \
+  --project-root . \
+  --buckets FP FN \
+  --sample-size 120 \
+  --title "Qwen Blind A/B Binary Judge Error Review"
 ```
 
 ## DINOv3/DINOv2 + Logistic Regression

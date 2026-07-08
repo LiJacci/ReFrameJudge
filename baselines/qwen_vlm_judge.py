@@ -23,6 +23,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_recall_f
 LABEL_TO_ID = {"lose": 0, "tie": 1, "win": 2}
 ID_TO_LABEL = {value: key for key, value in LABEL_TO_ID.items()}
 LABELS = [LABEL_TO_ID["lose"], LABEL_TO_ID["tie"], LABEL_TO_ID["win"]]
+BINARY_LABELS = [LABEL_TO_ID["lose"], LABEL_TO_ID["win"]]
 
 
 DEFAULT_PROMPT = """You are an expert photographic composition judge.
@@ -58,6 +59,39 @@ Rules:
 """
 
 
+BINARY_PROMPT = """You are an expert photographic composition judge.
+
+You will be given two images:
+1. Candidate A
+2. Candidate B
+
+Both candidates are alternative crops or framings of the same photo. Judge them only by photographic composition and visible image quality. Do not assume either candidate is intended to be better.
+
+Evaluate:
+- Composition: framing, subject placement, balance, crop, empty space, visual focus.
+- Content coverage: main subject, identity, important objects, scene semantics.
+- Visual naturalness: artifacts, lighting, perspective, texture, realism.
+
+Return only one valid JSON object:
+{
+  "choice": "A|B",
+  "preference_score": -2,
+  "composition_gain": 1,
+  "content_coverage": 1,
+  "visual_naturalness": 1,
+  "issue_tags": [],
+  "reason": ""
+}
+
+Rules:
+- Choose A if Candidate A has better photographic composition while preserving important content and visual quality.
+- Choose B if Candidate B has better photographic composition while preserving important content and visual quality.
+- You must choose A or B. Do not return tie.
+- preference_score must be an integer from -2 to 2, where negative favors A and positive favors B. Do not return 0 unless the API cannot evaluate the pair.
+- composition_gain, content_coverage, and visual_naturalness must be integers from 1 to 5.
+"""
+
+
 def read_jsonl(path, max_samples=None, seed=42):
     records = []
     with path.open("r", encoding="utf-8") as handle:
@@ -80,9 +114,9 @@ def encode_image(path):
     return f"data:{mime_type};base64,{data}"
 
 
-def load_prompt(path):
+def load_prompt(path, label_mode):
     if path is None:
-        return DEFAULT_PROMPT
+        return BINARY_PROMPT if label_mode == "binary" else DEFAULT_PROMPT
     return path.read_text(encoding="utf-8")
 
 
@@ -107,11 +141,12 @@ def clamp_int(value, minimum, maximum, default):
     return max(minimum, min(maximum, value))
 
 
-def normalize_choice(raw):
+def normalize_choice(raw, allow_tie):
     choice = str(raw.get("choice", "")).strip().upper()
-    if choice not in {"A", "B", "TIE"}:
+    valid_choices = {"A", "B", "TIE"} if allow_tie else {"A", "B"}
+    if choice not in valid_choices:
         legacy_label = str(raw.get("overall_label", "")).strip().lower()
-        if legacy_label == "tie":
+        if allow_tie and legacy_label == "tie":
             choice = "TIE"
         elif legacy_label in {"win", "b"}:
             choice = "B"
@@ -123,8 +158,10 @@ def normalize_choice(raw):
                 choice = "B"
             elif score < 0:
                 choice = "A"
-            else:
+            elif allow_tie:
                 choice = "TIE"
+            else:
+                choice = "B"
 
     return {
         "choice": "tie" if choice == "TIE" else choice,
@@ -205,20 +242,21 @@ def call_model(client, model, messages, temperature, max_tokens, retries, retry_
     raise last_error
 
 
-def evaluate(predictions):
+def evaluate(predictions, label_mode):
+    labels = BINARY_LABELS if label_mode == "binary" else LABELS
     y_true = [LABEL_TO_ID[item["true_label"]] for item in predictions]
     y_pred = [LABEL_TO_ID[item["pred_label"]] for item in predictions]
     precision, recall, f1, support = precision_recall_fscore_support(
         y_true,
         y_pred,
-        labels=LABELS,
+        labels=labels,
         average=None,
         zero_division=0,
     )
     macro_precision, macro_recall, macro_f1, _ = precision_recall_fscore_support(
         y_true,
         y_pred,
-        labels=LABELS,
+        labels=labels,
         average="macro",
         zero_division=0,
     )
@@ -227,8 +265,8 @@ def evaluate(predictions):
         "macro_precision": float(macro_precision),
         "macro_recall": float(macro_recall),
         "macro_f1": float(macro_f1),
-        "confusion_matrix_labels": [ID_TO_LABEL[label_id] for label_id in LABELS],
-        "confusion_matrix": confusion_matrix(y_true, y_pred, labels=LABELS).tolist(),
+        "confusion_matrix_labels": [ID_TO_LABEL[label_id] for label_id in labels],
+        "confusion_matrix": confusion_matrix(y_true, y_pred, labels=labels).tolist(),
         "per_class": {
             ID_TO_LABEL[label_id]: {
                 "precision": float(class_precision),
@@ -237,7 +275,7 @@ def evaluate(predictions):
                 "support": int(class_support),
             }
             for label_id, class_precision, class_recall, class_f1, class_support in zip(
-                LABELS,
+                labels,
                 precision,
                 recall,
                 f1,
@@ -263,6 +301,7 @@ def main():
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--predictions-jsonl", type=Path)
     parser.add_argument("--prompt-file", type=Path)
+    parser.add_argument("--label-mode", choices=["threeway", "binary"], default="threeway")
     parser.add_argument("--model", default=os.getenv("QWEN_VL_MODEL", "qwen3-vl-plus"))
     parser.add_argument(
         "--base-url",
@@ -294,7 +333,7 @@ def main():
         raise SystemExit(f"Missing API key. Set {args.api_key_env}=... or pass --api-key <key>")
 
     records = read_jsonl(args.input_jsonl, args.max_samples, args.seed)
-    prompt = load_prompt(args.prompt_file)
+    prompt = load_prompt(args.prompt_file, args.label_mode)
     client = OpenAI(api_key=api_key, base_url=args.base_url)
 
     predictions = []
@@ -319,7 +358,7 @@ def main():
                 args.retries,
                 args.retry_sleep,
             )
-            parsed = normalize_choice(extract_json(content))
+            parsed = normalize_choice(extract_json(content), allow_tie=args.label_mode != "binary")
             error = ""
         except Exception as exc:  # noqa: BLE001
             if not args.continue_on_error:
@@ -327,7 +366,7 @@ def main():
             content = ""
             raw_response = {"error": str(exc)}
             parsed = {
-                "choice": "tie",
+                "choice": "A" if args.label_mode == "binary" else "tie",
                 "preference_score": 0,
                 "composition_gain": 3,
                 "content_coverage": 5,
@@ -380,9 +419,10 @@ def main():
         "input_jsonl": str(args.input_jsonl),
         "records": len(predictions),
         "judge_mode": "blind_ab",
+        "label_mode": args.label_mode,
         "shuffle_order": args.shuffle_order,
         "temperature": args.temperature,
-        "metrics": evaluate(predictions),
+        "metrics": evaluate(predictions, args.label_mode),
     }
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(result, indent=2), encoding="utf-8")
