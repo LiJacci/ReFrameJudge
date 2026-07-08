@@ -130,12 +130,12 @@ Annotate a small sample with an OpenAI vision model:
 export OPENAI_API_KEY="your_api_key"
 
 python3 scripts/label_aesrecon_pairs_gpt.py \
-  --dataset-root /Users/jacci_loopy/Downloads/AesRecon_dataset \
-  --test-json /Users/jacci_loopy/Downloads/AesRecon_dataset/jsons/test/test.json \
-  --output-jsonl outputs/aesrecon_gpt_composition_labels_20.jsonl \
-  --summary-json outputs/aesrecon_gpt_composition_labels_20_summary.json \
-  --model gpt-4o \
-  --max-samples 20 \
+  --dataset-root ../../shared/ai-camera/AesRecon_dataset \
+  --test-json ../../shared/ai-camera/AesRecon_dataset/jsons/test/test.json \
+  --output-jsonl outputs/aesrecon_gpt_composition_labels_100.jsonl \
+  --summary-json outputs/aesrecon_gpt_composition_labels_100_summary.json \
+  --model gpt-5.4 \
+  --max-samples 100 \
   --continue-on-error
 ```
 

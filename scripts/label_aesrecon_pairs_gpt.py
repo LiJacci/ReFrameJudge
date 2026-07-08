@@ -18,9 +18,33 @@ import os
 import random
 import re
 import time
+import traceback
 from pathlib import Path
 
+import requests
 from openai import OpenAI
+
+
+OPENAI_API_KEY_DEFAULT = ""
+OPENAI_BASE_URL_DEFAULT = "https://api.openai.com/v1"
+
+
+def switch_clash_proxy(node_name="美国"):
+    """Switch Clash proxy to the specified node via Clash REST API (port 9091)."""
+    try:
+        clash_url = "http://127.0.0.1:9091/proxies/Proxy"
+        response = requests.get(clash_url, timeout=5)
+        if response.status_code == 200:
+            current = response.json().get("now", "")
+            if current != node_name:
+                requests.put(clash_url, json={"name": node_name}, timeout=5)
+                print(f"[Proxy] Switched from '{current}' to '{node_name}'")
+            else:
+                print(f"[Proxy] Already using '{node_name}'")
+        else:
+            print(f"[Proxy Warning] Failed to check proxy status: HTTP {response.status_code}")
+    except Exception as exc:  # noqa: BLE001
+        print(f"[Proxy Warning] Failed to switch proxy: {type(exc).__name__}: {exc}")
 
 
 PROMPT = """You are an expert photographic composition annotator.
@@ -186,14 +210,18 @@ def call_model(client, model, messages, temperature, max_tokens, retries, retry_
                 model=model,
                 messages=messages,
                 temperature=temperature,
-                max_tokens=max_tokens,
+                max_completion_tokens=max_tokens,
                 response_format={"type": "json_object"},
             )
             return response.choices[0].message.content, response.model_dump()
         except Exception as exc:  # noqa: BLE001
             last_error = exc
+            print(f"[Call Error] attempt {attempt + 1}/{retries + 1}: {type(exc).__name__}: {exc}")
+            traceback.print_exc()
             if attempt < retries:
-                time.sleep(retry_sleep * (2**attempt))
+                sleep_time = retry_sleep * (2**attempt)
+                print(f"  retrying in {sleep_time:.1f}s...")
+                time.sleep(sleep_time)
     raise last_error
 
 
@@ -249,26 +277,54 @@ def main():
     parser.add_argument("--summary-json", type=Path)
     parser.add_argument("--raw-jsonl", type=Path)
     parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-4o"))
-    parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL"))
+    parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL", OPENAI_BASE_URL_DEFAULT))
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
+    parser.add_argument("--api-key", default=None, help="Direct API key (overrides --api-key-env and default)")
     parser.add_argument("--max-samples", type=int, default=20)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--temperature", type=float, default=0.0)
+    parser.add_argument("--temperature", type=float, default=0.2)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--retries", type=int, default=2)
     parser.add_argument("--retry-sleep", type=float, default=2.0)
     parser.add_argument("--continue-on-error", action="store_true")
     parser.add_argument("--prompt-file", type=Path)
+    parser.add_argument(
+        "--proxy",
+        default=os.getenv("OPENAI_PROXY", os.getenv("HTTP_PROXY", os.getenv("HTTPS_PROXY", os.getenv("http_proxy", os.getenv("https_proxy", None))))),
+        help="Proxy URL for OpenAI requests (e.g. http://127.0.0.1:10809)",
+    )
+    parser.add_argument("--clash-node", default="美国", help="Clash proxy node name (e.g. 美国, 日本, 香港)")
+    parser.add_argument("--no-switch-clash", action="store_true", help="Do not switch Clash proxy node automatically")
     args = parser.parse_args()
 
-    api_key = os.getenv(args.api_key_env)
+    api_key = args.api_key if args.api_key else os.getenv(args.api_key_env, OPENAI_API_KEY_DEFAULT)
     if not api_key:
-        raise SystemExit(f"Missing API key. Set {args.api_key_env}=...")
+        raise SystemExit(f"Missing API key. Set {args.api_key_env}=... or pass --api-key <key>")
 
     prompt = PROMPT if args.prompt_file is None else args.prompt_file.read_text(encoding="utf-8")
-    client_kwargs = {"api_key": api_key}
-    if args.base_url:
-        client_kwargs["base_url"] = args.base_url
+    client_kwargs = {"api_key": api_key, "base_url": args.base_url}
+
+    proxy = args.proxy
+    is_official_endpoint = args.base_url.rstrip("/") == OPENAI_BASE_URL_DEFAULT.rstrip("/")
+    if proxy is None and is_official_endpoint:
+        proxy = "http://127.0.0.1:10809"
+        print(f"[OpenAI] Official endpoint detected, auto applying proxy: {proxy}")
+
+    if proxy:
+        print(f"[OpenAI] Using proxy: {proxy}")
+        os.environ["http_proxy"] = proxy
+        os.environ["https_proxy"] = proxy
+        os.environ["HTTP_PROXY"] = proxy
+        os.environ["HTTPS_PROXY"] = proxy
+        if not args.no_switch_clash:
+            switch_clash_proxy(args.clash_node)
+        try:
+            import httpx
+            transport = httpx.HTTPTransport(retries=3, proxy=proxy)
+            client_kwargs["http_client"] = httpx.Client(transport=transport, timeout=60.0)
+        except ImportError as e:
+            print(f"[OpenAI] Warning: httpx not installed, relying on environment proxy only: {e}")
+
     client = OpenAI(**client_kwargs)
 
     pairs = select_pairs(read_pairs(args.test_json), args.max_samples, args.seed)
@@ -310,6 +366,8 @@ def main():
             except Exception as exc:  # noqa: BLE001
                 if not args.continue_on_error:
                     raise
+                print(f"[Annotation Error] {pair['id']}: {type(exc).__name__}: {exc}")
+                traceback.print_exc()
                 content = ""
                 raw_response = {"error": str(exc)}
                 parsed = {
