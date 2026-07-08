@@ -229,9 +229,10 @@ def main():
     parser.add_argument("--model", default=os.getenv("QWEN_VL_MODEL", "qwen3-vl-plus"))
     parser.add_argument(
         "--base-url",
-        default=os.getenv("DASHSCOPE_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1"),
+        default=os.getenv("DASHSCOPE_BASE_URL", 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
     )
     parser.add_argument("--api-key-env", default="DASHSCOPE_API_KEY")
+    parser.add_argument("--api-key", default="sk-b2bc37c05e7843abb200904466bf9347", help="Direct API key (overrides --api-key-env)")
     parser.add_argument("--max-samples", type=int, default=30)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--temperature", type=float, default=0.0)
@@ -246,9 +247,9 @@ def main():
     )
     args = parser.parse_args()
 
-    api_key = os.getenv(args.api_key_env)
+    api_key = args.api_key if args.api_key else os.getenv(args.api_key_env)
     if not api_key:
-        raise SystemExit(f"Missing API key. Set {args.api_key_env}=...")
+        raise SystemExit(f"Missing API key. Set {args.api_key_env}=... or pass --api-key <key>")
 
     records = read_jsonl(args.input_jsonl, args.max_samples, args.seed)
     prompt = load_prompt(args.prompt_file)
