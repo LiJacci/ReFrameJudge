@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Qwen VLM judge baseline for ReFrameJudge image pairs.
 
-This script sends source/edit image pairs to a Qwen vision model through an
-OpenAI-compatible endpoint and asks it to return structured composition scores.
+This script sends blind A/B image pairs to a Qwen vision model through an
+OpenAI-compatible endpoint and asks it to return structured composition choices.
 It is intended for small sampled evaluations first because VLM calls cost money.
 """
 
@@ -28,33 +28,33 @@ LABELS = [LABEL_TO_ID["lose"], LABEL_TO_ID["tie"], LABEL_TO_ID["win"]]
 DEFAULT_PROMPT = """You are an expert photographic composition judge.
 
 You will be given two images:
-1. Source image
-2. Edited/reframed image
+1. Candidate A
+2. Candidate B
 
-Decide whether the edited image improves photographic composition while preserving the main content.
+Both candidates are alternative crops or framings of the same photo. Judge them only by photographic composition and visible image quality. Do not assume either candidate is intended to be better.
 
 Evaluate:
 - Composition: framing, subject placement, balance, crop, empty space, visual focus.
-- Content preservation: main subject, identity, important objects, scene semantics.
+- Content coverage: main subject, identity, important objects, scene semantics.
 - Visual naturalness: artifacts, lighting, perspective, texture, realism.
 
 Return only one valid JSON object:
 {
-  "overall_label": "win|tie|lose",
+  "choice": "A|B|tie",
   "preference_score": -2,
   "composition_gain": 1,
-  "content_preservation": 1,
+  "content_coverage": 1,
   "visual_naturalness": 1,
   "issue_tags": [],
   "reason": ""
 }
 
 Rules:
-- win: edited image is clearly better composed, preserves content, and is visually acceptable.
-- tie: no clear improvement, or improvement is offset by content/quality loss.
-- lose: edited image has worse composition, content damage, or severe artifacts.
-- preference_score must be an integer from -2 to 2.
-- composition_gain, content_preservation, and visual_naturalness must be integers from 1 to 5.
+- A: Candidate A is clearly better composed while preserving important content and visual quality.
+- B: Candidate B is clearly better composed while preserving important content and visual quality.
+- tie: no clear winner, or a composition advantage is offset by content/quality loss.
+- preference_score must be an integer from -2 to 2, where negative favors A, positive favors B, and 0 means tie.
+- composition_gain, content_coverage, and visual_naturalness must be integers from 1 to 5.
 """
 
 
@@ -107,31 +107,68 @@ def clamp_int(value, minimum, maximum, default):
     return max(minimum, min(maximum, value))
 
 
-def normalize_prediction(raw):
-    label = str(raw.get("overall_label", "")).strip().lower()
-    if label not in LABEL_TO_ID:
-        score = clamp_int(raw.get("preference_score"), -2, 2, 0)
-        if score > 0:
-            label = "win"
-        elif score < 0:
-            label = "lose"
+def normalize_choice(raw):
+    choice = str(raw.get("choice", "")).strip().upper()
+    if choice not in {"A", "B", "TIE"}:
+        legacy_label = str(raw.get("overall_label", "")).strip().lower()
+        if legacy_label == "tie":
+            choice = "TIE"
+        elif legacy_label in {"win", "b"}:
+            choice = "B"
+        elif legacy_label in {"lose", "a"}:
+            choice = "A"
         else:
-            label = "tie"
+            score = clamp_int(raw.get("preference_score"), -2, 2, 0)
+            if score > 0:
+                choice = "B"
+            elif score < 0:
+                choice = "A"
+            else:
+                choice = "TIE"
 
     return {
-        "overall_label": label,
+        "choice": "tie" if choice == "TIE" else choice,
         "preference_score": clamp_int(raw.get("preference_score"), -2, 2, 0),
         "composition_gain": clamp_int(raw.get("composition_gain"), 1, 5, 3),
-        "content_preservation": clamp_int(raw.get("content_preservation"), 1, 5, 5),
+        "content_coverage": clamp_int(
+            raw.get("content_coverage", raw.get("content_preservation")),
+            1,
+            5,
+            5,
+        ),
         "visual_naturalness": clamp_int(raw.get("visual_naturalness"), 1, 5, 5),
         "issue_tags": raw.get("issue_tags", []) if isinstance(raw.get("issue_tags", []), list) else [],
         "reason": str(raw.get("reason", "")),
     }
 
 
-def build_messages(record, project_root, prompt):
-    source_path = project_root / record["source_image"]
-    edited_path = project_root / record["edited_image"]
+def candidate_roles(record, seed, shuffle_order):
+    if not shuffle_order:
+        return "source", "edited"
+    rng = random.Random(f"{seed}:{record['id']}")
+    if rng.random() < 0.5:
+        return "source", "edited"
+    return "edited", "source"
+
+
+def image_for_role(record, role):
+    if role == "source":
+        return record["source_image"]
+    if role == "edited":
+        return record["edited_image"]
+    raise ValueError(f"Unknown candidate role: {role}")
+
+
+def label_from_choice(choice, candidate_a_role, candidate_b_role):
+    if choice == "tie":
+        return "tie"
+    winning_role = candidate_a_role if choice == "A" else candidate_b_role
+    return "lose" if winning_role == "source" else "win"
+
+
+def build_messages(record, project_root, prompt, candidate_a_role, candidate_b_role):
+    candidate_a_path = project_root / image_for_role(record, candidate_a_role)
+    candidate_b_path = project_root / image_for_role(record, candidate_b_role)
     return [
         {
             "role": "system",
@@ -141,10 +178,10 @@ def build_messages(record, project_root, prompt):
             "role": "user",
             "content": [
                 {"type": "text", "text": prompt},
-                {"type": "text", "text": "Source image:"},
-                {"type": "image_url", "image_url": {"url": encode_image(source_path)}},
-                {"type": "text", "text": "Edited/reframed image:"},
-                {"type": "image_url", "image_url": {"url": encode_image(edited_path)}},
+                {"type": "text", "text": "Candidate A:"},
+                {"type": "image_url", "image_url": {"url": encode_image(candidate_a_path)}},
+                {"type": "text", "text": "Candidate B:"},
+                {"type": "image_url", "image_url": {"url": encode_image(candidate_b_path)}},
             ],
         },
     ]
@@ -232,9 +269,14 @@ def main():
         default=os.getenv("DASHSCOPE_BASE_URL", 'https://dashscope.aliyuncs.com/compatible-mode/v1'),
     )
     parser.add_argument("--api-key-env", default="DASHSCOPE_API_KEY")
-    parser.add_argument("--api-key", default="sk-b2bc37c05e7843abb200904466bf9347", help="Direct API key (overrides --api-key-env)")
+    parser.add_argument("--api-key", help="Direct API key. Prefer --api-key-env for normal use.")
     parser.add_argument("--max-samples", type=int, default=30)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--shuffle-order",
+        action="store_true",
+        help="Randomly assign each pair to Candidate A/B using --seed, then map the choice back.",
+    )
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=512)
     parser.add_argument("--retries", type=int, default=2)
@@ -258,7 +300,14 @@ def main():
     predictions = []
     raw_responses = []
     for index, record in enumerate(records, 1):
-        messages = build_messages(record, args.project_root, prompt)
+        candidate_a_role, candidate_b_role = candidate_roles(record, args.seed, args.shuffle_order)
+        messages = build_messages(
+            record,
+            args.project_root,
+            prompt,
+            candidate_a_role,
+            candidate_b_role,
+        )
         print(f"[{index}/{len(records)}] judging {record['id']}")
         try:
             content, raw_response = call_model(
@@ -270,7 +319,7 @@ def main():
                 args.retries,
                 args.retry_sleep,
             )
-            parsed = normalize_prediction(extract_json(content))
+            parsed = normalize_choice(extract_json(content))
             error = ""
         except Exception as exc:  # noqa: BLE001
             if not args.continue_on_error:
@@ -278,36 +327,51 @@ def main():
             content = ""
             raw_response = {"error": str(exc)}
             parsed = {
-                "overall_label": "tie",
+                "choice": "tie",
                 "preference_score": 0,
                 "composition_gain": 3,
-                "content_preservation": 5,
+                "content_coverage": 5,
                 "visual_naturalness": 5,
                 "issue_tags": ["api_error"],
                 "reason": str(exc),
             }
             error = str(exc)
+        pred_label = label_from_choice(parsed["choice"], candidate_a_role, candidate_b_role)
         prediction = {
             "id": record["id"],
             "split": Path(args.input_jsonl).stem,
             "source_image": record["source_image"],
             "edited_image": record["edited_image"],
+            "candidate_a_image": image_for_role(record, candidate_a_role),
+            "candidate_b_image": image_for_role(record, candidate_b_role),
+            "candidate_a_role": candidate_a_role,
+            "candidate_b_role": candidate_b_role,
+            "choice": parsed["choice"],
             "true_label": record["overall_label"],
-            "pred_label": parsed["overall_label"],
+            "pred_label": pred_label,
             "preference_score": parsed["preference_score"],
             "composition_gain": parsed["composition_gain"],
-            "content_preservation": parsed["content_preservation"],
+            "content_coverage": parsed["content_coverage"],
+            "content_preservation": parsed["content_coverage"],
             "visual_naturalness": parsed["visual_naturalness"],
             "issue_tags": parsed["issue_tags"],
             "reason": parsed["reason"],
             "error": error,
-            "correct": record["overall_label"] == parsed["overall_label"],
+            "correct": record["overall_label"] == pred_label,
             "target_vote_margin": record.get("vote_margin"),
             "target_preference_strength": record.get("preference_strength"),
             "notes": record.get("notes", ""),
         }
         predictions.append(prediction)
-        raw_responses.append({"id": record["id"], "content": content, "response": raw_response})
+        raw_responses.append(
+            {
+                "id": record["id"],
+                "candidate_a_role": candidate_a_role,
+                "candidate_b_role": candidate_b_role,
+                "content": content,
+                "response": raw_response,
+            }
+        )
 
     result = {
         "model": "qwen_vlm_judge",
@@ -315,6 +379,8 @@ def main():
         "base_url": args.base_url,
         "input_jsonl": str(args.input_jsonl),
         "records": len(predictions),
+        "judge_mode": "blind_ab",
+        "shuffle_order": args.shuffle_order,
         "temperature": args.temperature,
         "metrics": evaluate(predictions),
     }
