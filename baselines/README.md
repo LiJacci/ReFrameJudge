@@ -85,6 +85,32 @@ Run the FCDB score-regression baseline:
   --cache data/cache/clip_embeddings_fcdb_5k.npz
 ```
 
+Run a sampled Qwen VLM judge baseline:
+
+```bash
+export DASHSCOPE_API_KEY="your_api_key"
+
+.venvR/bin/python baselines/qwen_vlm_judge.py \
+  --input-jsonl data/pairs/annotations/fcdb_3way_test.jsonl \
+  --output-json outputs/qwen_vlm_judge_fcdb_3way_test_30.json \
+  --predictions-jsonl outputs/qwen_vlm_judge_fcdb_3way_test_30_predictions.jsonl \
+  --project-root . \
+  --model qwen3-vl-plus \
+  --max-samples 30
+```
+
+If your Alibaba Cloud Model Studio region requires a workspace-specific endpoint, pass it explicitly:
+
+```bash
+.venvR/bin/python baselines/qwen_vlm_judge.py \
+  --input-jsonl data/pairs/annotations/fcdb_3way_test.jsonl \
+  --output-json outputs/qwen_vlm_judge_fcdb_3way_test_30.json \
+  --predictions-jsonl outputs/qwen_vlm_judge_fcdb_3way_test_30_predictions.jsonl \
+  --base-url "https://{WorkspaceId}.cn-beijing.maas.aliyuncs.com/compatible-mode/v1" \
+  --model qwen3-vl-plus \
+  --max-samples 30
+```
+
 Build an error review page from validation/test predictions:
 
 ```bash
@@ -131,6 +157,18 @@ Build a score-regression error review page:
   --buckets ERROR \
   --sample-size 120 \
   --title "CLIP Score Regression Error Review"
+```
+
+Build a Qwen VLM judge error review page:
+
+```bash
+.venvR/bin/python scripts/build_error_review_html.py \
+  --predictions outputs/qwen_vlm_judge_fcdb_3way_test_30_predictions.jsonl \
+  --output outputs/qwen_vlm_judge_error_review.html \
+  --project-root . \
+  --buckets ERROR FP FN \
+  --sample-size 120 \
+  --title "Qwen VLM Judge Error Review"
 ```
 
 ## DINOv3/DINOv2 + Logistic Regression

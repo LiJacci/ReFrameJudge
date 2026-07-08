@@ -107,6 +107,7 @@ def build_html(records, project_root, output_path, title):
         source = rel_image_path(record["source_image"], project_root, output_path)
         edited = rel_image_path(record["edited_image"], project_root, output_path)
         tags = ", ".join(record.get("issue_tags", []))
+        reason = record.get("reason", "")
         sections.append(
             f"""
       <section class="sample {css_class(bucket)}">
@@ -129,6 +130,7 @@ def build_html(records, project_root, output_path, title):
         </div>
         <div class="details">
           <div><strong>tags:</strong> {html.escape(tags)}</div>
+          <div><strong>reason:</strong> {html.escape(reason)}</div>
           <div><strong>notes:</strong> {html.escape(record.get('notes', ''))}</div>
         </div>
       </section>
