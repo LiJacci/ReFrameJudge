@@ -32,3 +32,21 @@ Quality report:
 ```text
 reports/aesrecon_500_quality_report.md
 ```
+
+## ReFrameGen Pilot Sources
+
+`source_manifests/reframegen_pilot_aesrecon_sources_50.jsonl` contains 50 AesRecon poor images selected from the AesRecon test pairs that are not included in AesRecon-500.
+
+- Source images: 50
+- Overlap with AesRecon-500: 0
+- Intended use: generate recomposed candidates for ReFrameGen pilot pairs
+- Recommended candidates per source: 2
+- Expected generated pairs: about 100
+
+Rebuild the manifest:
+
+```bash
+python3 scripts/prepare_reframegen_sources.py --check-images
+```
+
+Source paths in the manifest are relative to the AesRecon dataset root.

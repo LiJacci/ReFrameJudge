@@ -156,3 +156,18 @@ data/reframejudge_v1/splits/aesrecon_val.jsonl
 data/reframejudge_v1/splits/aesrecon_test.jsonl
 reports/aesrecon_500_quality_report.md
 ```
+
+Prepare non-overlapping AesRecon poor images for the ReFrameGen generated-pair pilot:
+
+```bash
+python3 scripts/prepare_reframegen_sources.py --check-images
+```
+
+Outputs:
+
+```text
+data/reframejudge_v1/source_manifests/reframegen_pilot_aesrecon_sources_50.jsonl
+reports/reframegen_pilot_sources_50.md
+```
+
+The manifest excludes all `source_record_id` values already used by `data/reframejudge_v1/annotations/aesrecon_500.jsonl`.
