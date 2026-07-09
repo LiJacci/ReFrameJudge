@@ -50,3 +50,44 @@ python3 scripts/prepare_reframegen_sources.py --check-images
 ```
 
 Source paths in the manifest are relative to the AesRecon dataset root.
+
+## ReFrameGen Seedream Generation Plan
+
+Positive composition prompts are stored in:
+
+```text
+prompt_banks/reframegen_positive_composition_prompts.json
+```
+
+Build a dry-run generation manifest with 5 randomly assigned positive composition prompts per source:
+
+```bash
+python3 scripts/generate_reframegen_seedream.py \
+  --dry-run \
+  --check-images
+```
+
+Dry-run output:
+
+```text
+generated_manifests/reframegen_pilot_seedream_250.jsonl
+```
+
+Run Seedream generation after configuring the dataset root and API credentials:
+
+```bash
+export AESRECON_DATASET_ROOT="/path/to/AesRecon_dataset"
+export SEEDREAM_API_KEY="your_api_key"
+export SEEDREAM_BASE_URL="https://ark.ap-southeast.bytepluses.com/api/v3"
+export SEEDREAM_MODEL="doubao-seedream-4-0"
+
+python3 scripts/generate_reframegen_seedream.py \
+  --check-images \
+  --continue-on-error
+```
+
+For China Volcengine Ark, set `SEEDREAM_BASE_URL` to the region endpoint, for example:
+
+```text
+https://ark.cn-beijing.volces.com/api/v3
+```

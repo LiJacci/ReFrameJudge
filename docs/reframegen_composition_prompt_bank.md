@@ -447,45 +447,7 @@ Risk:
 May remove scene context or over-blur the background.
 ```
 
-## Prompt 12: Visual Balance With Secondary Element
-
-Principle:
-
-```text
-Visual weight and balance
-```
-
-Use When:
-
-```text
-The main subject is too heavy on one side or the frame feels visually lopsided.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the frame so the main subject is visually balanced
-by a smaller secondary element, background structure, or area of negative space.
-The secondary element should support the subject without competing for attention.
-```
-
-Expected Change:
-
-```text
-visual balance
-controlled secondary element
-more intentional spatial structure
-```
-
-Risk:
-
-```text
-May add or overemphasize secondary objects.
-```
-
-## Prompt 13: Fill The Frame Subject Prominence
+## Prompt 12: Fill The Frame Subject Prominence
 
 Principle:
 
@@ -523,7 +485,7 @@ Risk:
 May crop too tightly or lose environmental context.
 ```
 
-## Prompt 14: Simplify Background Clutter
+## Prompt 13: Simplify Background Clutter
 
 Principle:
 
@@ -561,7 +523,7 @@ Risk:
 May erase important contextual objects.
 ```
 
-## Prompt 15: Golden Ratio Visual Flow
+## Prompt 14: Golden Ratio Visual Flow
 
 Principle:
 
@@ -600,49 +562,9 @@ Risk:
 This instruction may be abstract for some image editing models.
 ```
 
-## Prompt 16: Mild Bad Edge Composition
-
-Principle:
-
-```text
-Hard negative / mild composition degradation
-```
-
-Use When:
-
-```text
-We need lose or weak-negative candidates for evaluator training.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject and scene,
-but intentionally introduce a mild composition problem:
-place the subject slightly too close to the frame edge,
-leave unbalanced empty space,
-or crop a secondary object awkwardly.
-Do not create obvious artifacts or unrealistic content.
-```
-
-Expected Change:
-
-```text
-edge crowding
-unbalanced empty space
-awkward crop
-```
-
-Risk:
-
-```text
-If too strong, this creates trivial negatives rather than useful hard negatives.
-```
-
 ## Suggested Pilot Selection
 
-For the first ReFrameGen pilot, use 8 positive prompts and 2 negative or weak prompts.
+For the first ReFrameGen pilot, use positive composition prompts only.
 
 Recommended positive prompts:
 
@@ -655,13 +577,8 @@ frame_within_frame
 foreground_depth_layering
 edge_control_clean_crop
 subject_background_separation
-```
-
-Recommended auxiliary prompts:
-
-```text
-visual_balance_with_secondary_element
-mild_bad_edge_composition
+fill_the_frame_subject_prominence
+simplify_background_clutter
 ```
 
 ## References
