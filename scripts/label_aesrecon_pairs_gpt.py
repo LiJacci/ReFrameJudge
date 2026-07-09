@@ -26,25 +26,7 @@ from openai import OpenAI
 
 
 OPENAI_API_KEY_DEFAULT = ""
-OPENAI_BASE_URL_DEFAULT = "https://api.openai.com/v1"
-
-
-def switch_clash_proxy(node_name="美国"):
-    """Switch Clash proxy to the specified node via Clash REST API (port 9091)."""
-    try:
-        clash_url = "http://127.0.0.1:9091/proxies/Proxy"
-        response = requests.get(clash_url, timeout=5)
-        if response.status_code == 200:
-            current = response.json().get("now", "")
-            if current != node_name:
-                requests.put(clash_url, json={"name": node_name}, timeout=5)
-                print(f"[Proxy] Switched from '{current}' to '{node_name}'")
-            else:
-                print(f"[Proxy] Already using '{node_name}'")
-        else:
-            print(f"[Proxy Warning] Failed to check proxy status: HTTP {response.status_code}")
-    except Exception as exc:  # noqa: BLE001
-        print(f"[Proxy Warning] Failed to switch proxy: {type(exc).__name__}: {exc}")
+OPENAI_BASE_URL_DEFAULT = "https://www.aifast.club/v1"
 
 
 PROMPT = """You are an expert photographic composition annotator.
@@ -301,13 +283,6 @@ def main():
     parser.add_argument("--retry-sleep", type=float, default=2.0)
     parser.add_argument("--continue-on-error", action="store_true")
     parser.add_argument("--prompt-file", type=Path)
-    parser.add_argument(
-        "--proxy",
-        default=os.getenv("OPENAI_PROXY", os.getenv("HTTP_PROXY", os.getenv("HTTPS_PROXY", os.getenv("http_proxy", os.getenv("https_proxy", None))))),
-        help="Proxy URL for OpenAI requests (e.g. http://127.0.0.1:10809)",
-    )
-    parser.add_argument("--clash-node", default="美国", help="Clash proxy node name (e.g. 美国, 日本, 香港)")
-    parser.add_argument("--no-switch-clash", action="store_true", help="Do not switch Clash proxy node automatically")
     args = parser.parse_args()
 
     api_key = args.api_key if args.api_key else os.getenv(args.api_key_env, OPENAI_API_KEY_DEFAULT)
@@ -316,27 +291,6 @@ def main():
 
     prompt = PROMPT if args.prompt_file is None else args.prompt_file.read_text(encoding="utf-8")
     client_kwargs = {"api_key": api_key, "base_url": args.base_url}
-
-    proxy = args.proxy
-    is_official_endpoint = args.base_url.rstrip("/") == OPENAI_BASE_URL_DEFAULT.rstrip("/")
-    if proxy is None and is_official_endpoint:
-        proxy = "http://127.0.0.1:10809"
-        print(f"[OpenAI] Official endpoint detected, auto applying proxy: {proxy}")
-
-    if proxy:
-        print(f"[OpenAI] Using proxy: {proxy}")
-        os.environ["http_proxy"] = proxy
-        os.environ["https_proxy"] = proxy
-        os.environ["HTTP_PROXY"] = proxy
-        os.environ["HTTPS_PROXY"] = proxy
-        if not args.no_switch_clash:
-            switch_clash_proxy(args.clash_node)
-        try:
-            import httpx
-            transport = httpx.HTTPTransport(retries=3, proxy=proxy)
-            client_kwargs["http_client"] = httpx.Client(transport=transport, timeout=60.0)
-        except ImportError as e:
-            print(f"[OpenAI] Warning: httpx not installed, relying on environment proxy only: {e}")
 
     client = OpenAI(**client_kwargs)
 

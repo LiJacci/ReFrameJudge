@@ -16,7 +16,7 @@ import time
 from pathlib import Path
 
 OPENAI_API_KEY_DEFAULT = ""
-OPENAI_BASE_URL_DEFAULT = "https://api.openai.com/v1"
+OPENAI_BASE_URL_DEFAULT = "https://www.aifast.club/v1"
 
 MATCHING_PROMPT = """You are a photography composition editor.
 
