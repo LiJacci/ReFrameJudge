@@ -140,3 +140,19 @@ python3 scripts/label_aesrecon_pairs_gpt.py \
 ```
 
 The script treats the poor image as `source_image` and the good image as `edited_image`. Each output row has `overall_label=win` from the dataset direction, while GPT fills weak composition fields such as `composition_relevance`, `label_confidence`, `composition_score`, `composition_gain`, `positive_tags`, `negative_tags`, and `reason`. The prompt asks GPT to use `high` relevance/confidence and `composition_gain=5` sparingly, so these fields can help filter strong composition-specific pairs instead of turning every preferred AesRecon pair into a maximal composition win.
+
+Freeze the 500-pair GPT annotation output as the first ReFrameJudge-v1 subset:
+
+```bash
+python3 scripts/build_reframejudge_v1_aesrecon.py
+```
+
+Outputs:
+
+```text
+data/reframejudge_v1/annotations/aesrecon_500.jsonl
+data/reframejudge_v1/splits/aesrecon_train.jsonl
+data/reframejudge_v1/splits/aesrecon_val.jsonl
+data/reframejudge_v1/splits/aesrecon_test.jsonl
+reports/aesrecon_500_quality_report.md
+```

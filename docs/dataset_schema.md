@@ -38,6 +38,7 @@ crop
 outpainting
 view_change
 subject_reposition
+aesthetic_reconstruction
 unknown
 ```
 

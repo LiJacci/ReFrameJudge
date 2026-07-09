@@ -14,6 +14,7 @@ VALID_EDIT_TYPES = {
     "outpainting",
     "view_change",
     "subject_reposition",
+    "aesthetic_reconstruction",
     "unknown",
 }
 VALID_TAGS = {
