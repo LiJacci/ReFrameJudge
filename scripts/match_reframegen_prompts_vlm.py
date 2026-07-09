@@ -106,7 +106,11 @@ def image_data_url(path):
 
 
 def extract_json(text):
+    if text is None:
+        raise ValueError("Response content is None (model returned empty content)")
     text = text.strip()
+    if not text:
+        raise ValueError("Response content is empty string")
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -162,7 +166,13 @@ def call_model(client, model, messages, temperature, max_tokens, retries, retry_
                 max_tokens=max_tokens,
                 response_format={"type": "json_object"},
             )
-            return response.choices[0].message.content, response.model_dump()
+            content = response.choices[0].message.content
+            if content is None or not str(content).strip():
+                raise ValueError(
+                    "Model returned empty content (content=None or empty), "
+                    "possibly due to content filtering or max_tokens truncation"
+                )
+            return content, response.model_dump()
         except Exception as exc:  # noqa: BLE001
             last_error = exc
             if attempt < retries:
