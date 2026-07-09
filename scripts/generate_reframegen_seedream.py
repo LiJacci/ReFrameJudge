@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 """Generate ReFrameGen edited candidates with Seedream-style image APIs.
 
-The script reads source images and positive composition prompts, randomly
-assigns several composition principles to each source, and optionally calls an
-OpenAI-compatible image generation/editing endpoint.
+The script reads a source-aware generation manifest produced by
+scripts/match_reframegen_prompts_vlm.py and optionally calls an OpenAI-compatible
+image generation/editing endpoint.
 
-Use --dry-run first to create the generation manifest without spending API
-credits.
+Use --dry-run first to validate the manifest without spending API credits.
 """
 
 import argparse
@@ -14,7 +13,6 @@ import base64
 import json
 import mimetypes
 import os
-import random
 import time
 from pathlib import Path
 from urllib.parse import urlparse
@@ -24,14 +22,6 @@ import requests
 
 DEFAULT_BASE_URL = "https://ark.ap-southeast.bytepluses.com/api/v3"
 DEFAULT_MODEL = "doubao-seedream-4-0"
-GENERAL_CONSTRAINT = (
-    "Edit the input photo as a realistic photograph. Preserve the same main subject, "
-    "identity, clothing, important objects, and scene identity. Do not add new important "
-    "objects. Do not remove the main subject. Do not change the person identity. Do not "
-    "turn the image into an illustration, painting, poster, or stylized artwork. Keep "
-    "the result natural and photographically realistic."
-)
-
 
 def read_jsonl(path):
     records = []
@@ -43,94 +33,12 @@ def read_jsonl(path):
     return records
 
 
-def write_jsonl(path, records):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8") as handle:
-        for record in records:
-            handle.write(json.dumps(record, ensure_ascii=True) + "\n")
-
-
-def read_json(path):
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
 def image_data_url(path):
     mime_type, _ = mimetypes.guess_type(path)
     if mime_type is None:
         mime_type = "image/jpeg"
     encoded = base64.b64encode(path.read_bytes()).decode("ascii")
     return f"data:{mime_type};base64,{encoded}"
-
-
-def build_prompt(prompt_record):
-    return (
-        f"{GENERAL_CONSTRAINT}\n\n"
-        f"Composition principle: {prompt_record['principle']}.\n"
-        f"Editing instruction: {prompt_record['prompt']}\n\n"
-        "Make the composition change visible but not extreme. Keep the output as a natural "
-        "real photo rather than a stylized reinterpretation."
-    )
-
-
-def choose_prompts(prompt_bank, source_id, prompts_per_source, seed):
-    if prompts_per_source > len(prompt_bank):
-        raise ValueError(
-            f"prompts_per_source={prompts_per_source} exceeds prompt bank size={len(prompt_bank)}"
-        )
-    rng = random.Random(f"{seed}:{source_id}")
-    selected = rng.sample(prompt_bank, prompts_per_source)
-    selected.sort(key=lambda item: item["id"])
-    return selected
-
-
-def output_image_path(output_image_dir, candidate_id, extension):
-    return output_image_dir / f"{candidate_id}{extension}"
-
-
-def make_tasks(sources, prompt_bank, args):
-    tasks = []
-    for source_index, source in enumerate(sources, 1):
-        if args.limit_sources is not None and source_index > args.limit_sources:
-            break
-        selected_prompts = choose_prompts(
-            prompt_bank,
-            source["id"],
-            args.prompts_per_source,
-            args.seed,
-        )
-        source_image_path = args.dataset_root / source["source_image"]
-        if args.check_images and not source_image_path.exists():
-            raise FileNotFoundError(source_image_path)
-
-        for candidate_index, prompt_record in enumerate(selected_prompts, 1):
-            if args.limit_tasks is not None and len(tasks) >= args.limit_tasks:
-                return tasks
-            candidate_id = f"{source['id']}_seedream_{candidate_index:02d}"
-            tasks.append(
-                {
-                    "id": candidate_id,
-                    "source_manifest_id": source["id"],
-                    "source_dataset": source["source_dataset"],
-                    "source_record_id": source["source_record_id"],
-                    "source_image": source["source_image"],
-                    "edited_image": str(output_image_path(args.output_image_dir, candidate_id, args.output_ext)),
-                    "generation_model": args.model,
-                    "generation_provider": "seedream",
-                    "generation_task": "composition_recomposition",
-                    "target_behavior": "positive_composition_edit",
-                    "prompt_id": prompt_record["id"],
-                    "composition_principle": prompt_record["principle"],
-                    "expected_change": prompt_record.get("expected_change", []),
-                    "generation_prompt": build_prompt(prompt_record),
-                    "paired_good_image": source.get("paired_good_image", ""),
-                    "notes": (
-                        "Generated candidate for ReFrameGen pilot. The source image is from "
-                        "AesRecon but excluded from AesRecon-500. Final win/tie/lose labels "
-                        "must be assigned later by VLM or human review."
-                    ),
-                }
-            )
-    return tasks
 
 
 def endpoint_url(base_url):
@@ -251,7 +159,7 @@ def write_summary(path, tasks, completed, errors, args):
         "errors_this_run": errors,
         "model": args.model,
         "base_url_host": urlparse(args.base_url).netloc,
-        "prompts_per_source": args.prompts_per_source,
+        "generation_manifest": str(args.generation_manifest),
         "dry_run": args.dry_run,
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -261,14 +169,9 @@ def write_summary(path, tasks, completed, errors, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--source-manifest",
+        "--generation-manifest",
         type=Path,
-        default=Path("data/reframejudge_v1/source_manifests/reframegen_pilot_aesrecon_sources_50.jsonl"),
-    )
-    parser.add_argument(
-        "--prompt-bank",
-        type=Path,
-        default=Path("data/reframejudge_v1/prompt_banks/reframegen_positive_composition_prompts.json"),
+        default=Path("data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_matched_150.jsonl"),
     )
     parser.add_argument(
         "--dataset-root",
@@ -278,7 +181,7 @@ def main():
     parser.add_argument(
         "--output-jsonl",
         type=Path,
-        default=Path("data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_250.jsonl"),
+        default=Path("data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_generated.jsonl"),
     )
     parser.add_argument(
         "--raw-jsonl",
@@ -290,15 +193,7 @@ def main():
         type=Path,
         default=Path("outputs/reframegen_seedream_summary.json"),
     )
-    parser.add_argument(
-        "--output-image-dir",
-        type=Path,
-        default=Path("data/reframejudge_v1/generated/reframegen_pilot_seedream/images"),
-    )
-    parser.add_argument("--output-ext", default=".png")
-    parser.add_argument("--prompts-per-source", type=int, default=5)
     parser.add_argument("--seed", type=int, default=20260709)
-    parser.add_argument("--limit-sources", type=int)
     parser.add_argument("--limit-tasks", type=int)
     parser.add_argument("--check-images", action="store_true")
     parser.add_argument("--dry-run", action="store_true")
@@ -321,14 +216,27 @@ def main():
     parser.add_argument("--save-request-payload", action="store_true")
     args = parser.parse_args()
 
-    sources = read_jsonl(args.source_manifest)
-    prompt_bank = read_json(args.prompt_bank)
-    tasks = make_tasks(sources, prompt_bank, args)
+    tasks = read_jsonl(args.generation_manifest)
+    if args.limit_tasks is not None:
+        tasks = tasks[: args.limit_tasks]
+    if args.check_images:
+        for task in tasks:
+            source_image_path = args.dataset_root / task["source_image"]
+            if not source_image_path.exists():
+                raise FileNotFoundError(source_image_path)
 
     if args.dry_run:
-        write_jsonl(args.output_jsonl, tasks)
         write_summary(args.summary_json, tasks, 0, 0, args)
-        print(json.dumps({"dry_run_tasks": len(tasks), "output_jsonl": str(args.output_jsonl)}, indent=2))
+        print(
+            json.dumps(
+                {
+                    "dry_run_tasks": len(tasks),
+                    "generation_manifest": str(args.generation_manifest),
+                    "output_jsonl": str(args.output_jsonl),
+                },
+                indent=2,
+            )
+        )
         return
 
     if not args.api_key:

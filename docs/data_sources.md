@@ -172,7 +172,18 @@ reports/reframegen_pilot_sources_50.md
 
 The manifest excludes all `source_record_id` values already used by `data/reframejudge_v1/annotations/aesrecon_500.jsonl`.
 
-Generate Seedream editing tasks from the 50-source manifest with positive composition prompts only:
+Match each source image to suitable positive composition prompts with a vision-language model:
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+
+python3 scripts/match_reframegen_prompts_vlm.py \
+  --check-images
+```
+
+This creates `data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_matched_150.jsonl`, with 3 source-aware positive composition prompts for each source image.
+
+Validate the matched Seedream editing tasks:
 
 ```bash
 python3 scripts/generate_reframegen_seedream.py \
@@ -180,4 +191,4 @@ python3 scripts/generate_reframegen_seedream.py \
   --check-images
 ```
 
-This creates `data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_250.jsonl`, with 5 randomly assigned positive composition prompts for each source image. Remove `--dry-run` and configure `SEEDREAM_API_KEY`, `SEEDREAM_BASE_URL`, and `SEEDREAM_MODEL` to call the actual Seedream endpoint.
+Remove `--dry-run` and configure `SEEDREAM_API_KEY`, `SEEDREAM_BASE_URL`, and `SEEDREAM_MODEL` to call the actual Seedream endpoint.

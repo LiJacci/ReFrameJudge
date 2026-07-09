@@ -51,7 +51,7 @@ python3 scripts/prepare_reframegen_sources.py --check-images
 
 Source paths in the manifest are relative to the AesRecon dataset root.
 
-## ReFrameGen Seedream Generation Plan
+## ReFrameGen Prompt Matching And Seedream Generation
 
 Positive composition prompts are stored in:
 
@@ -59,7 +59,24 @@ Positive composition prompts are stored in:
 prompt_banks/reframegen_positive_composition_prompts.json
 ```
 
-Build a dry-run generation manifest with 5 randomly assigned positive composition prompts per source:
+First match each source image to suitable composition prompts with a vision-language model:
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+
+python3 scripts/match_reframegen_prompts_vlm.py \
+  --check-images
+```
+
+Matching output:
+
+```text
+generated_manifests/reframegen_pilot_seedream_matched_150.jsonl
+```
+
+This selects 3 source-aware positive composition prompts per source, for about 150 generated candidates.
+
+Validate the matched generation manifest without spending Seedream credits:
 
 ```bash
 python3 scripts/generate_reframegen_seedream.py \
@@ -67,13 +84,7 @@ python3 scripts/generate_reframegen_seedream.py \
   --check-images
 ```
 
-Dry-run output:
-
-```text
-generated_manifests/reframegen_pilot_seedream_250.jsonl
-```
-
-Run Seedream generation after configuring the dataset root and API credentials:
+Run Seedream generation after configuring the dataset root and Seedream credentials:
 
 ```bash
 export AESRECON_DATASET_ROOT="/path/to/AesRecon_dataset"

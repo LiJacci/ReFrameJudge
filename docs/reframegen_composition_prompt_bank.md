@@ -566,19 +566,24 @@ This instruction may be abstract for some image editing models.
 
 For the first ReFrameGen pilot, use positive composition prompts only.
 
-Recommended positive prompts:
+Do not assign prompts randomly. Each source image should first be diagnosed by a
+vision-language model, then matched to the prompts whose `Use When` conditions
+are actually visible in the image.
+
+Recommended workflow:
 
 ```text
-rule_of_thirds_subject_placement
-active_space_directional_room
-intentional_negative_space
-leading_lines_to_subject
-frame_within_frame
-foreground_depth_layering
-edge_control_clean_crop
-subject_background_separation
-fill_the_frame_subject_prominence
-simplify_background_clutter
+1. Diagnose source image composition.
+2. Score every positive prompt for applicability.
+3. Select the top 3 prompts per source image.
+4. Generate 3 edited candidates per source with Seedream.
+5. Label the resulting source-edited pairs with a VLM or human review.
+```
+
+Expected pilot size:
+
+```text
+50 source images * 3 matched prompts = 150 generated candidates
 ```
 
 ## References
