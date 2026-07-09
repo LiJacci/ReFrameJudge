@@ -155,13 +155,13 @@ def main():
     parser.add_argument(
         "--dataset-root",
         type=Path,
-        default=Path("/Users/jacci_loopy/Downloads/AesRecon_dataset"),
+        default=Path("../../shared/ai-camera/AesRecon_dataset"),
         help="Used only for optional image existence checks.",
     )
     parser.add_argument(
         "--test-json",
         type=Path,
-        default=Path("/Users/jacci_loopy/Downloads/AesRecon_dataset/jsons/test/test.json"),
+        default=Path("../../shared/ai-camera/AesRecon_dataset/jsons/test/test.json"),
     )
     parser.add_argument(
         "--exclude-jsonl",

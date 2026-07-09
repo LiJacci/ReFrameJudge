@@ -279,17 +279,17 @@ def main():
     parser.add_argument(
         "--dataset-root",
         type=Path,
-        default=Path("/Users/jacci_loopy/Downloads/AesRecon_dataset"),
+        default=Path("../../shared/ai-camera/AesRecon_dataset"),
     )
     parser.add_argument(
         "--test-json",
         type=Path,
-        default=Path("/Users/jacci_loopy/Downloads/AesRecon_dataset/jsons/test/test.json"),
+        default=Path("../../shared/ai-camera/AesRecon_dataset/jsons/test/test.json"),
     )
     parser.add_argument("--output-jsonl", type=Path, required=True)
     parser.add_argument("--summary-json", type=Path)
     parser.add_argument("--raw-jsonl", type=Path)
-    parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-4o"))
+    parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-5.4"))
     parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL", OPENAI_BASE_URL_DEFAULT))
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
     parser.add_argument("--api-key", default=None, help="Direct API key (overrides --api-key-env and default)")

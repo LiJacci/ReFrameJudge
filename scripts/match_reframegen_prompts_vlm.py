@@ -15,6 +15,8 @@ import re
 import time
 from pathlib import Path
 
+OPENAI_API_KEY_DEFAULT = ""
+OPENAI_BASE_URL_DEFAULT = "https://api.openai.com/v1"
 
 MATCHING_PROMPT = """You are a photography composition editor.
 
@@ -261,7 +263,7 @@ def main():
     parser.add_argument(
         "--dataset-root",
         type=Path,
-        default=Path(os.getenv("AESRECON_DATASET_ROOT", "/Users/jacci_loopy/Downloads/AesRecon_dataset")),
+        default=Path(os.getenv("AESRECON_DATASET_ROOT", "../../shared/ai-camera/AesRecon_dataset")),
     )
     parser.add_argument(
         "--output-jsonl",
@@ -280,8 +282,8 @@ def main():
     parser.add_argument("--check-images", action="store_true")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
     parser.add_argument("--api-key", default=None)
-    parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL"))
-    parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-4o"))
+    parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-5.4"))
+    parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL", OPENAI_BASE_URL_DEFAULT))
     parser.add_argument("--seedream-model", default=os.getenv("SEEDREAM_MODEL", "doubao-seedream-4-0"))
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-tokens", type=int, default=1200)
@@ -290,7 +292,7 @@ def main():
     parser.add_argument("--continue-on-error", action="store_true")
     args = parser.parse_args()
 
-    api_key = args.api_key or os.getenv(args.api_key_env)
+    api_key = args.api_key if args.api_key else os.getenv(args.api_key_env, OPENAI_API_KEY_DEFAULT)
     if not api_key:
         raise SystemExit(f"Missing API key. Set {args.api_key_env}=... or pass --api-key.")
 
