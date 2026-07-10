@@ -231,7 +231,6 @@ python3 scripts/match_reframegen_prompts_vlm.py \
   --check-images \
   --limit-sources 10 \
   --top-k 2 \
-  --require-viewpoint \
   --candidate-tag seedream_strong \
   --output-image-dir data/reframejudge_v1/generated/reframegen_pilot_seedream_strong20/images \
   --output-jsonl data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_matched_20.jsonl \

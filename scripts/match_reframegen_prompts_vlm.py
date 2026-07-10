@@ -17,41 +17,36 @@ from pathlib import Path
 
 OPENAI_API_KEY_DEFAULT = ""
 OPENAI_BASE_URL_DEFAULT = "https://www.aifast.club/v1"
-VIEWPOINT_PROMPT_IDS = {
-    "high_angle_environmental_view",
-    "low_angle_subject_emphasis",
-    "bird_eye_top_down_layout",
-    "three_quarter_side_view_depth",
-    "portrait_landscape_orientation_reframe",
-}
 
 MATCHING_PROMPT = """You are a photography composition editor.
 
 You will receive one source photograph and a list of positive composition editing prompts.
 Your task is to decide which prompts are actually suitable for this image.
 
-Do not choose prompts randomly. Choose prompts only when the source image visually supports that composition operation.
+Do not choose prompts randomly. Choose prompts that can plausibly solve visible composition problems in the source image.
+The source image does not need to already contain the final composition. A prompt is suitable if its editing operation could reasonably improve a visible composition issue while preserving subject identity and scene semantics.
 
-Use these applicability rules:
-- rule_of_thirds_subject_placement: suitable when the subject is too centered, static, or weakly placed.
-- active_space_directional_room: suitable when the subject has a clear gaze, facing direction, walking direction, or motion direction.
-- intentional_negative_space: suitable when simpler surrounding space would clarify the subject.
-- leading_lines_to_subject: suitable when roads, railings, paths, walls, rivers, stairs, shadows, or architectural lines can guide attention.
-- frame_within_frame: suitable when doors, windows, arches, trees, mirrors, railings, or car frames can naturally frame the subject.
-- foreground_depth_layering: suitable when foreground/middle-ground/background depth can be strengthened without blocking the subject.
-- centered_symmetry: suitable only when the scene has natural symmetry such as corridors, stairs, doors, reflections, bridges, or architecture.
-- diagonal_dynamic_composition: suitable when pose, road, railing, shoreline, shadow, or architecture can create a diagonal visual flow.
-- edge_control_clean_crop: suitable when important body parts or objects are close to the edge or awkwardly cropped.
-- horizon_thirds_placement: suitable only when a horizon, skyline, waterline, road boundary, or major horizontal boundary is visible.
-- subject_background_separation: suitable when the subject blends into the background or has distracting overlaps.
-- fill_the_frame_subject_prominence: suitable when the subject is too small or there is too much unnecessary margin.
-- simplify_background_clutter: suitable when background clutter or competing objects distract from the subject.
-- golden_ratio_visual_flow: suitable when an organic off-center flow is plausible, but avoid this if the image has no meaningful structure.
-- high_angle_environmental_view: suitable when a higher viewpoint could reveal the subject's environment, ground pattern, table, stairs, road, shoreline, or spatial layout.
-- low_angle_subject_emphasis: suitable for standing people, architecture, statues, trees, or tall structures where a lower viewpoint could increase subject presence.
-- bird_eye_top_down_layout: suitable only when an overhead or near-overhead view is plausible and would clarify layout, patterns, paths, tables, roads, or ground relationships.
-- three_quarter_side_view_depth: suitable when the current view is flat or front-facing and a side shift could reveal depth, diagonal planes, or background parallax.
-- portrait_landscape_orientation_reframe: suitable when switching between vertical and horizontal framing would better fit the subject, scene direction, or dominant visual lines.
+Think in terms of visible composition problems and possible solutions:
+- Centered, static, or weak subject placement can be improved by rule_of_thirds_subject_placement, golden_ratio_visual_flow, three_quarter_side_view_depth, or low_angle_subject_emphasis.
+- A subject with gaze, facing, walking, or motion direction can be improved by active_space_directional_room or portrait_landscape_orientation_reframe.
+- Busy background, visual clutter, or competing objects can be improved by simplify_background_clutter, subject_background_separation, high_angle_environmental_view, low_angle_subject_emphasis, or three_quarter_side_view_depth.
+- Subject-background merging, tangents, or objects intersecting the head/body can be improved by subject_background_separation, high_angle_environmental_view, low_angle_subject_emphasis, or three_quarter_side_view_depth.
+- Unclear spatial layout or weak depth can be improved by foreground_depth_layering, high_angle_environmental_view, bird_eye_top_down_layout, or three_quarter_side_view_depth.
+- A subject that is too small or lacks presence can be improved by fill_the_frame_subject_prominence, low_angle_subject_emphasis, or portrait_landscape_orientation_reframe.
+- Edge crowding, awkward crop, or excess dead space can be improved by edge_control_clean_crop, portrait_landscape_orientation_reframe, high_angle_environmental_view, or rule_of_thirds_subject_placement.
+- A horizon, skyline, waterline, road boundary, or major horizontal structure can be improved by horizon_thirds_placement, high_angle_environmental_view, or low_angle_subject_emphasis.
+- Roads, railings, paths, walls, rivers, stairs, shadows, shorelines, or architectural lines can be improved by leading_lines_to_subject or diagonal_dynamic_composition.
+- Doors, windows, arches, trees, mirrors, railings, or car frames can be improved by frame_within_frame.
+- Natural symmetry such as corridors, stairs, doors, reflections, bridges, or architecture can be improved by centered_symmetry.
+
+Viewpoint/orientation prompts are normal composition solutions, not special cases:
+- high_angle_environmental_view is suitable when a higher viewpoint could organize clutter, reduce excessive foreground, clarify subject-environment relationship, reveal ground/table/stair/road/shoreline layout, or separate the subject from a busy background.
+- low_angle_subject_emphasis is suitable when the subject lacks prominence, appears too small or weak, blends into clutter, or when sky/ceiling/architecture/trees/open upper background can support an upward-looking composition.
+- bird_eye_top_down_layout is suitable when a high-oblique or overhead view could clarify meaningful floor/table/road/plaza/shoreline/stairs/seating/food/object/shadow/ground patterns. It does not require a perfect vertical top-down view.
+- three_quarter_side_view_depth is suitable when the image feels flat, front-facing, centered, static, or crowded, or when a side viewpoint could create depth, diagonal structure, parallax, or cleaner subject-background separation.
+- portrait_landscape_orientation_reframe is suitable when the current aspect ratio creates excessive empty space, cuts off useful context, crowds the subject, lacks directional room, or does not match dominant scene structure.
+
+Do not choose only the safest local crop edits. Consider both local composition fixes and stronger viewpoint/orientation recompositions when they can solve visible problems.
 
 Return only one JSON object:
 {
@@ -144,19 +139,9 @@ def prompt_bank_brief(prompt_bank):
     ]
 
 
-def build_messages(source_image_path, prompt_bank, top_k, require_viewpoint):
-    viewpoint_instruction = ""
-    if require_viewpoint:
-        viewpoint_instruction = (
-            "\n\nPilot requirement: include at least one viewpoint or orientation prompt in the returned matches "
-            "when it is physically plausible for the scene. Viewpoint/orientation prompts are: "
-            + ", ".join(sorted(VIEWPOINT_PROMPT_IDS))
-            + ". Choose the most plausible viewpoint prompt and explain the visible evidence. "
-            "The other returned prompt may be the best non-viewpoint composition prompt."
-        )
+def build_messages(source_image_path, prompt_bank, top_k):
     text = (
         MATCHING_PROMPT
-        + viewpoint_instruction
         + "\n\n"
         + f"Return exactly {top_k} matched prompts.\n\n"
         + "Available prompts:\n"
@@ -227,15 +212,6 @@ def normalize_matches(raw, prompt_ids, top_k):
         )
     matches.sort(key=lambda item: (-item["applicability_score"], item["prompt_id"]))
     return diagnosis, matches[:top_k]
-
-
-def require_viewpoint_match(matches, source_id):
-    if any(match["prompt_id"] in VIEWPOINT_PROMPT_IDS for match in matches):
-        return
-    raise ValueError(
-        f"{source_id} did not return a viewpoint/orientation prompt. "
-        "Try rerunning, increasing top-k, or disabling --require-viewpoint."
-    )
 
 
 def build_generation_prompt(prompt_record):
@@ -336,11 +312,6 @@ def main():
     parser.add_argument("--output-ext", default=".png")
     parser.add_argument("--candidate-tag", default="seedream")
     parser.add_argument("--top-k", type=int, default=3)
-    parser.add_argument(
-        "--require-viewpoint",
-        action="store_true",
-        help="Require at least one high/low/bird-eye/side-view/orientation prompt per source.",
-    )
     parser.add_argument("--limit-sources", type=int)
     parser.add_argument("--check-images", action="store_true")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
@@ -388,7 +359,7 @@ def main():
                 content, raw_response = call_model(
                     client,
                     args.model,
-                    build_messages(source_image_path, prompt_bank, args.top_k, args.require_viewpoint),
+                    build_messages(source_image_path, prompt_bank, args.top_k),
                     args.temperature,
                     args.max_tokens,
                     args.retries,
@@ -398,8 +369,6 @@ def main():
                 diagnosis, matches = normalize_matches(parsed, prompt_ids, args.top_k)
                 if len(matches) < args.top_k:
                     raise ValueError(f"Only {len(matches)} valid matches returned")
-                if args.require_viewpoint:
-                    require_viewpoint_match(matches, source["id"])
                 error = ""
             except Exception as exc:  # noqa: BLE001
                 if not args.continue_on_error:
