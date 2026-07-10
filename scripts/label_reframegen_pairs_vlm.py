@@ -28,7 +28,7 @@ You will receive two images:
 1. Source image
 2. Generated edited image
 
-The edited image was generated from the source image with a composition-improvement instruction. Your task is to label whether the edited image is a better recomposition of the source image, and whether this pair is usable for training a composition evaluator.
+The edited image was generated from the source image with a composition-improvement instruction. Your task is to label whether the edited image is a better recomposition of the source image.
 
 Always compare the edited image against the source image. Do not judge the edited image as a standalone pretty picture.
 
@@ -43,7 +43,8 @@ Judge composition-related changes:
 Also judge whether the generated image preserves the source content and looks like a natural photograph.
 
 Important:
-- If the edited image mainly removes phone UI, black borders, screenshots, watermarks, or other capture artifacts without a meaningful photographic recomposition, mark usable_for_training as false or low confidence.
+- Ignore small watermarks, provider marks, logos, or corner text when assigning overall_label, improvement_score, composition_gain, content_preservation, visual_naturalness, composition_relevance, and label_confidence. If a watermark exists, mention it only in negative_tags or reason. Only penalize it when it blocks important content or dominates the image.
+- If the edited image mainly removes phone UI, black borders, screenshots, or other capture artifacts without a meaningful photographic recomposition, mark composition_relevance as low or label_confidence as low.
 - If the main subject identity or scene semantics change, the final label should usually be tie or lose even when the edited image looks prettier.
 - If composition improves but realism/content preservation is poor, do not mark it as win.
 - Prefer tie when the change is too subtle, ambiguous, or mostly non-compositional.
@@ -51,7 +52,7 @@ Important:
 Return only one valid JSON object:
 {
   "overall_label": "win|tie|lose",
-  "improvement_score": 0,
+  "improvement_score": 0.0,
   "composition_gain": 3,
   "content_preservation": 5,
   "visual_naturalness": 5,
@@ -61,7 +62,6 @@ Return only one valid JSON object:
   "identity_preserved": true,
   "realism_ok": true,
   "artifact_issue": false,
-  "usable_for_training": true,
   "positive_tags": [],
   "negative_tags": [],
   "reason": ""
@@ -72,8 +72,8 @@ Rules:
   - "win" means the edited image clearly improves composition while preserving main content and acceptable visual realism.
   - "tie" means composition is similar, the change is too subtle, or gains are offset by content/quality issues.
   - "lose" means composition is worse, content is damaged, or generated artifacts make it unusable.
-- improvement_score must be an integer from -2 to 2:
-  - -2 much worse, -1 slightly worse, 0 similar/ambiguous, 1 slightly better, 2 much better.
+- improvement_score must be a number from -2.0 to 2.0, rounded to one decimal place:
+  - -2.0 much worse, -1.0 slightly worse, 0.0 similar/ambiguous, 1.0 slightly better, 2.0 much better.
 - composition_gain must be an integer from 1 to 5:
   - 1 much worse composition, 2 slightly worse, 3 similar, 4 better, 5 much better.
 - content_preservation must be an integer from 1 to 5:
@@ -90,7 +90,6 @@ Rules:
   - "high" only when the comparison is obvious.
   - "medium" when plausible but mixed.
   - "low" when hard to judge.
-- usable_for_training should be true only when the source/edit pair can teach a composition evaluator.
 - Use positive_tags for visible composition improvements.
 - Use negative_tags for remaining issues, artifacts, or reasons to filter.
 """
@@ -180,6 +179,15 @@ def clamp_int(value, minimum, maximum, default):
     return max(minimum, min(maximum, value))
 
 
+def clamp_float(value, minimum, maximum, default, ndigits=1):
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        value = default
+    value = max(minimum, min(maximum, value))
+    return round(value, ndigits)
+
+
 def normalize_level(value, valid_values, default):
     value = str(value).strip().lower()
     return value if value in valid_values else default
@@ -205,7 +213,7 @@ def normalize_list(value):
 
 def normalize_response(raw):
     label = normalize_level(raw.get("overall_label"), {"win", "tie", "lose"}, "tie")
-    improvement_score = clamp_int(raw.get("improvement_score"), -2, 2, 0)
+    improvement_score = clamp_float(raw.get("improvement_score"), -2.0, 2.0, 0.0)
     composition_gain = clamp_int(raw.get("composition_gain"), 1, 5, 3)
     content_preservation = clamp_int(raw.get("content_preservation"), 1, 5, 3)
     visual_naturalness = clamp_int(raw.get("visual_naturalness"), 1, 5, 3)
@@ -213,13 +221,6 @@ def normalize_response(raw):
     artifact_issue = normalize_bool(raw.get("artifact_issue"), visual_naturalness <= 2)
     identity_preserved = normalize_bool(raw.get("identity_preserved"), content_preservation >= 4)
     realism_ok = normalize_bool(raw.get("realism_ok"), visual_naturalness >= 3)
-    usable_for_training = normalize_bool(
-        raw.get("usable_for_training"),
-        content_preservation >= 4
-        and visual_naturalness >= 3
-        and change_strength >= 1
-        and normalize_level(raw.get("composition_relevance"), {"high", "medium", "low"}, "medium") != "low",
-    )
     return {
         "overall_label": label,
         "improvement_score": improvement_score,
@@ -240,7 +241,6 @@ def normalize_response(raw):
         "identity_preserved": identity_preserved,
         "realism_ok": realism_ok,
         "artifact_issue": artifact_issue,
-        "usable_for_training": usable_for_training,
         "positive_tags": normalize_list(raw.get("positive_tags", [])),
         "negative_tags": normalize_list(raw.get("negative_tags", [])),
         "reason": str(raw.get("reason", "")),
@@ -285,7 +285,6 @@ def write_summary(path, records, total_requested, skipped_existing):
     label_counts = Counter(record.get("overall_label", "error") for record in records)
     relevance_counts = Counter(record.get("composition_relevance", "unknown") for record in records)
     confidence_counts = Counter(record.get("label_confidence", "unknown") for record in records)
-    usable_counts = Counter(str(record.get("usable_for_training", False)).lower() for record in records)
     change_counts = Counter(record.get("change_strength", "unknown") for record in records)
     summary = {
         "records_written_this_run": len(records),
@@ -294,7 +293,6 @@ def write_summary(path, records, total_requested, skipped_existing):
         "label_counts": dict(label_counts),
         "composition_relevance_counts": dict(relevance_counts),
         "label_confidence_counts": dict(confidence_counts),
-        "usable_for_training_counts": dict(usable_counts),
         "change_strength_counts": dict(change_counts),
     }
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -316,10 +314,18 @@ def main():
     parser.add_argument(
         "--output-jsonl",
         type=Path,
-        default=Path("data/reframejudge_v1/annotations/reframegen_seedream_strong150_vlm_labels.jsonl"),
+        default=Path("data/reframejudge_v1/annotations/reframegen_seedream_strong150_vlm_labels_ignore_watermark.jsonl"),
     )
-    parser.add_argument("--summary-json", type=Path, default=Path("outputs/reframegen_seedream_strong150_vlm_label_summary.json"))
-    parser.add_argument("--raw-jsonl", type=Path, default=Path("outputs/reframegen_seedream_strong150_vlm_label_raw.jsonl"))
+    parser.add_argument(
+        "--summary-json",
+        type=Path,
+        default=Path("outputs/reframegen_seedream_strong150_vlm_label_ignore_watermark_summary.json"),
+    )
+    parser.add_argument(
+        "--raw-jsonl",
+        type=Path,
+        default=Path("outputs/reframegen_seedream_strong150_vlm_label_ignore_watermark_raw.jsonl"),
+    )
     parser.add_argument("--model", default=os.getenv("OPENAI_VISION_MODEL", "gpt-5.4"))
     parser.add_argument("--base-url", default=os.getenv("OPENAI_BASE_URL", OPENAI_BASE_URL_DEFAULT))
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
@@ -402,7 +408,7 @@ def main():
                 raw_response = {"error": str(exc)}
                 parsed = {
                     "overall_label": "tie",
-                    "improvement_score": 0,
+                    "improvement_score": 0.0,
                     "composition_gain": 3,
                     "content_preservation": 3,
                     "visual_naturalness": 3,
@@ -412,7 +418,6 @@ def main():
                     "identity_preserved": False,
                     "realism_ok": False,
                     "artifact_issue": True,
-                    "usable_for_training": False,
                     "positive_tags": [],
                     "negative_tags": ["api_error"],
                     "reason": str(exc),
@@ -428,6 +433,7 @@ def main():
                 "data_source": "ReFrameGen-Seedream",
                 "pair_type": "generated_recomposition_pair",
                 "label_source": f"{args.model}_vlm_composition_annotation",
+                "annotation_policy": "composition_focused_ignore_small_watermarks",
                 "overall_label": parsed["overall_label"],
                 "improvement_score": parsed["improvement_score"],
                 "composition_gain": parsed["composition_gain"],
@@ -439,7 +445,6 @@ def main():
                 "identity_preserved": parsed["identity_preserved"],
                 "realism_ok": parsed["realism_ok"],
                 "artifact_issue": parsed["artifact_issue"],
-                "usable_for_training": parsed["usable_for_training"],
                 "issue_tags": issue_tags,
                 "positive_tags": parsed["positive_tags"],
                 "negative_tags": parsed["negative_tags"],

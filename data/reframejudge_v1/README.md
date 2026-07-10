@@ -148,9 +148,9 @@ export AESRECON_DATASET_ROOT="/path/to/AesRecon_dataset"
 python3 scripts/label_reframegen_pairs_vlm.py \
   --check-images \
   --generation-manifest data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_generated_150.jsonl \
-  --output-jsonl data/reframejudge_v1/annotations/reframegen_seedream_strong150_vlm_labels.jsonl \
-  --raw-jsonl outputs/reframegen_seedream_strong150_vlm_label_raw.jsonl \
-  --summary-json outputs/reframegen_seedream_strong150_vlm_label_summary.json
+  --output-jsonl data/reframejudge_v1/annotations/reframegen_seedream_strong150_vlm_labels_ignore_watermark.jsonl \
+  --raw-jsonl outputs/reframegen_seedream_strong150_vlm_label_ignore_watermark_raw.jsonl \
+  --summary-json outputs/reframegen_seedream_strong150_vlm_label_ignore_watermark_summary.json
 ```
 
-The labels include `overall_label`, composition/content/realism scores, `change_strength`, and `usable_for_training` diagnostics.
+The labels include `overall_label`, a one-decimal `improvement_score`, composition/content/realism scores, and `change_strength`. The default prompt ignores small watermarks when assigning composition labels, while still allowing watermark mentions in diagnostic tags.
