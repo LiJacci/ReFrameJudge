@@ -43,7 +43,7 @@ Judge composition-related changes:
 Also judge whether the generated image preserves the source content and looks like a natural photograph.
 
 Important:
-- Ignore small watermarks, provider marks, logos, or corner text when assigning overall_label, improvement_score, composition_gain, content_preservation, visual_naturalness, composition_relevance, and label_confidence. If a watermark exists, mention it only in negative_tags or reason. Only penalize it when it blocks important content or dominates the image.
+- Completely ignore watermarks, provider marks, logos, corner text, or model-added signature text. Treat them as if they do not exist. Do not let them affect any score, label, confidence, artifact judgment, tags, or reason. Do not mention watermark-related issues in positive_tags, negative_tags, or reason.
 - If the edited image mainly removes phone UI, black borders, screenshots, or other capture artifacts without a meaningful photographic recomposition, mark composition_relevance as low or label_confidence as low.
 - If the main subject identity or scene semantics change, the final label should usually be tie or lose even when the edited image looks prettier.
 - If composition improves but realism/content preservation is poor, do not mark it as win.
@@ -433,7 +433,7 @@ def main():
                 "data_source": "ReFrameGen-Seedream",
                 "pair_type": "generated_recomposition_pair",
                 "label_source": f"{args.model}_vlm_composition_annotation",
-                "annotation_policy": "composition_focused_ignore_small_watermarks",
+                "annotation_policy": "composition_focused_ignore_watermarks",
                 "overall_label": parsed["overall_label"],
                 "improvement_score": parsed["improvement_score"],
                 "composition_gain": parsed["composition_gain"],

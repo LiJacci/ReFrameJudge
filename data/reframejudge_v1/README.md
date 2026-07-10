@@ -153,4 +153,4 @@ python3 scripts/label_reframegen_pairs_vlm.py \
   --summary-json outputs/reframegen_seedream_strong150_vlm_label_ignore_watermark_summary.json
 ```
 
-The labels include `overall_label`, a one-decimal `improvement_score`, composition/content/realism scores, and `change_strength`. The default prompt ignores small watermarks when assigning composition labels, while still allowing watermark mentions in diagnostic tags.
+The labels include `overall_label`, a one-decimal `improvement_score`, composition/content/realism scores, and `change_strength`. The default prompt completely ignores watermarks and does not mention them in labels, scores, tags, or reasons.
