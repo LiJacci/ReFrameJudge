@@ -1,0 +1,28 @@
+{
+  "records_written_this_run": 150,
+  "total_requested": 150,
+  "skipped_existing": 0,
+  "label_counts": {
+    "tie": 122,
+    "win": 23,
+    "lose": 5
+  },
+  "composition_relevance_counts": {
+    "high": 55,
+    "medium": 67,
+    "low": 28
+  },
+  "label_confidence_counts": {
+    "medium": 126,
+    "high": 24
+  },
+  "usable_for_training_counts": {
+    "false": 99,
+    "true": 51
+  },
+  "change_strength_counts": {
+    "2": 99,
+    "1": 43,
+    "3": 8
+  }
+}
