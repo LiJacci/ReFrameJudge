@@ -82,5 +82,35 @@
     "principle": "golden_ratio",
     "prompt": "Recompose the photo with a golden-ratio-inspired visual flow. Place the main subject noticeably off-center, around a golden-ratio focal area rather than the exact center. Arrange surrounding space, lines, or background elements so the viewer's eye naturally moves toward the subject. Adjust the crop or canvas so the image has a new organic visual flow. The edited image should be visibly different from the input and not just a subtle cleanup.",
     "expected_change": ["golden_ratio_focal_area", "off_center_subject", "organic_visual_flow", "visible_reframing"]
+  },
+  {
+    "id": "high_angle_environmental_view",
+    "principle": "high_angle_viewpoint",
+    "prompt": "Recompose the photo from a higher camera angle, as if the camera is slightly above the subject and looking downward. Use this viewpoint to show the subject's relationship to the surrounding environment, ground pattern, table surface, shoreline, road, stairs, or architectural layout. Keep the main subject recognizable and naturally photographed. The edited image should clearly feel less eye-level and more top-down than the input.",
+    "expected_change": ["higher_camera_angle", "environmental_context", "top_down_spatial_layout", "visible_viewpoint_change"]
+  },
+  {
+    "id": "low_angle_subject_emphasis",
+    "principle": "low_angle_viewpoint",
+    "prompt": "Recompose the photo from a lower camera angle, as if the camera is below the subject's eye level and looking slightly upward. Use the low viewpoint to make the subject feel more prominent, powerful, or sculptural while preserving identity and realistic perspective. Include appropriate sky, ceiling, building, tree, or background structure above the subject when plausible. The edited image should clearly feel less eye-level and more upward-looking than the input.",
+    "expected_change": ["lower_camera_angle", "upward_perspective", "stronger_subject_presence", "visible_viewpoint_change"]
+  },
+  {
+    "id": "bird_eye_top_down_layout",
+    "principle": "bird_eye_viewpoint",
+    "prompt": "Recompose the photo with a bird's-eye or near top-down viewpoint when plausible for the scene. Show the subject and surrounding layout from above so paths, floors, tables, roads, water edges, shadows, or ground patterns become part of the composition. Keep the result realistic and do not use this if a top-down camera position would be impossible for the scene. The edited image should show a clearly different overhead spatial arrangement.",
+    "expected_change": ["bird_eye_view", "overhead_layout", "ground_pattern", "strong_viewpoint_change"]
+  },
+  {
+    "id": "three_quarter_side_view_depth",
+    "principle": "three_quarter_viewpoint",
+    "prompt": "Recompose the photo from a three-quarter side viewpoint instead of a flat straight-on view. Shift the camera slightly left or right so the subject and background show more depth, side planes, diagonal lines, and foreground-background separation. Keep the same subject and scene semantics. The edited image should clearly reveal a more dimensional side angle than the input.",
+    "expected_change": ["side_viewpoint", "three_quarter_angle", "depth_cues", "background_parallax"]
+  },
+  {
+    "id": "portrait_landscape_orientation_reframe",
+    "principle": "orientation_reframe",
+    "prompt": "Recompose the photo by switching between portrait and landscape framing when it improves the composition. If the input is vertical, create a natural horizontal composition with more side context; if the input is horizontal, create a natural vertical composition that emphasizes the subject and vertical structure. Keep the output resolution and visual scale close to the original image rather than simply upscaling. The edited image should clearly use a different frame orientation or aspect-ratio logic while preserving the same subject and scene.",
+    "expected_change": ["orientation_change", "aspect_ratio_reframe", "portrait_or_landscape_composition", "same_scale_output"]
   }
 ]

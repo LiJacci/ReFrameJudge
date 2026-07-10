@@ -14,6 +14,10 @@ subject scale
 horizon placement
 foreground/background layout
 visible subject-background separation
+high angle / low angle viewpoint
+bird's-eye viewpoint
+three-quarter side viewpoint
+portrait / landscape reframing
 ```
 
 ## General Constraint
@@ -31,6 +35,8 @@ Do not remove the main subject.
 Do not add new important subjects.
 Do not turn the image into an illustration, painting, poster, or stylized artwork.
 The result should look like a natural real photograph, but the composition should be visibly different from the input.
+Keep the output pixel size and visual scale close to the original image; do not simply upscale the photo.
+You may switch between portrait and landscape framing when the composition instruction calls for it.
 ```
 
 ## Strong Positive Prompts
@@ -171,6 +177,51 @@ Adjust the crop or canvas so the image has a new organic visual flow.
 The edited image should be visibly different from the input and not just a subtle cleanup.
 ```
 
+### high_angle_environmental_view
+
+```text
+Recompose the photo from a higher camera angle, as if the camera is slightly above the subject and looking downward.
+Use this viewpoint to show the subject's relationship to the surrounding environment, ground pattern, table surface, shoreline, road, stairs, or architectural layout.
+Keep the main subject recognizable and naturally photographed.
+The edited image should clearly feel less eye-level and more top-down than the input.
+```
+
+### low_angle_subject_emphasis
+
+```text
+Recompose the photo from a lower camera angle, as if the camera is below the subject's eye level and looking slightly upward.
+Use the low viewpoint to make the subject feel more prominent, powerful, or sculptural while preserving identity and realistic perspective.
+Include appropriate sky, ceiling, building, tree, or background structure above the subject when plausible.
+The edited image should clearly feel less eye-level and more upward-looking than the input.
+```
+
+### bird_eye_top_down_layout
+
+```text
+Recompose the photo with a bird's-eye or near top-down viewpoint when plausible for the scene.
+Show the subject and surrounding layout from above so paths, floors, tables, roads, water edges, shadows, or ground patterns become part of the composition.
+Keep the result realistic and do not use this if a top-down camera position would be impossible for the scene.
+The edited image should show a clearly different overhead spatial arrangement.
+```
+
+### three_quarter_side_view_depth
+
+```text
+Recompose the photo from a three-quarter side viewpoint instead of a flat straight-on view.
+Shift the camera slightly left or right so the subject and background show more depth, side planes, diagonal lines, and foreground-background separation.
+Keep the same subject and scene semantics.
+The edited image should clearly reveal a more dimensional side angle than the input.
+```
+
+### portrait_landscape_orientation_reframe
+
+```text
+Recompose the photo by switching between portrait and landscape framing when it improves the composition.
+If the input is vertical, create a natural horizontal composition with more side context; if the input is horizontal, create a natural vertical composition that emphasizes the subject and vertical structure.
+Keep the output resolution and visual scale close to the original image rather than simply upscaling.
+The edited image should clearly use a different frame orientation or aspect-ratio logic while preserving the same subject and scene.
+```
+
 ## Pilot Recommendation
 
 Do not regenerate all 150 candidates immediately. First run a 10-source / 20-candidate pilot:
@@ -187,3 +238,12 @@ python3 scripts/match_reframegen_prompts_vlm.py \
 ```
 
 Then run Seedream from the strong matched manifest.
+
+By default, `scripts/generate_reframegen_seedream.py` now uses `--size source`, which requests the input image pixel size instead of forcing a 2K output. Override `SEEDREAM_SIZE` only when a provider requires a fixed size.
+
+## References
+
+- Digital Photography School explains bird's-eye, high-angle, low-angle, and bug's-eye viewpoints as distinct photographic camera angles.
+- B&H's viewpoint and perspective guide emphasizes changing elevation, left/right position, and distance to change foreground/background organization.
+- Anton Gorlin's composition guide discusses frame shape, horizontal/vertical alignment, and matching orientation to dominant compositional lines.
+- NYIP notes that low angle shots provide a different perspective and help images stand out.

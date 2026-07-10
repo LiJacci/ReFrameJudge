@@ -17,6 +17,7 @@ import time
 from pathlib import Path
 from urllib.parse import urlparse
 
+from PIL import Image
 import requests
 
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
@@ -44,12 +45,20 @@ def endpoint_url(base_url):
     return base_url.rstrip("/") + "/images/generations"
 
 
-def build_payload(task, image_url, args):
+def resolve_output_size(size, source_image_path):
+    if str(size).lower() not in {"source", "input", "same"}:
+        return size
+    with Image.open(source_image_path) as image:
+        width, height = image.size
+    return f"{width}x{height}"
+
+
+def build_payload(task, image_url, args, source_image_path):
     payload = {
         "model": args.model,
         "prompt": task["generation_prompt"],
         "n": 1,
-        "size": args.size,
+        "size": resolve_output_size(args.size, source_image_path),
         "response_format": args.response_format,
     }
     if args.seed is not None:
@@ -106,8 +115,9 @@ def save_image_from_item(item, output_path, timeout):
 
 
 def call_seedream(task, args, session):
-    image_url = image_data_url(args.dataset_root / task["source_image"])
-    payload = build_payload(task, image_url, args)
+    source_image_path = args.dataset_root / task["source_image"]
+    image_url = image_data_url(source_image_path)
+    payload = build_payload(task, image_url, args, source_image_path)
     headers = {
         "Authorization": f"Bearer {args.api_key}",
         "Content-Type": "application/json",
@@ -210,7 +220,11 @@ def main():
         default=os.getenv("SEEDREAM_IMAGE_FIELD", "image"),
         help="Payload field for the input image data URL. Use image_urls[] for an array field.",
     )
-    parser.add_argument("--size", default=os.getenv("SEEDREAM_SIZE", "2K"))
+    parser.add_argument(
+        "--size",
+        default=os.getenv("SEEDREAM_SIZE", "source"),
+        help="Use 'source' to request the input image pixel size, or pass a provider-supported size such as 2K or 1024x1536.",
+    )
     parser.add_argument("--response-format", default=os.getenv("SEEDREAM_RESPONSE_FORMAT", "b64_json"))
     parser.add_argument("--extra-payload", help="JSON object merged into every API payload.")
     parser.add_argument("--timeout", type=float, default=120.0)

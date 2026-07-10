@@ -134,3 +134,5 @@ python3 scripts/generate_reframegen_seedream.py \
 ```
 
 Run actual generation by removing `--dry-run` after configuring `SEEDREAM_API_KEY`, `SEEDREAM_BASE_URL`, and `SEEDREAM_MODEL`.
+
+`scripts/generate_reframegen_seedream.py` defaults to `--size source`, so it requests an output size matching the source image pixels instead of forcing a larger 2K/4K image. If the Seedream endpoint rejects exact pixel sizes, set `SEEDREAM_SIZE` to a provider-supported value.

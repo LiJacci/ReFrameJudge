@@ -40,6 +40,11 @@ Use these applicability rules:
 - fill_the_frame_subject_prominence: suitable when the subject is too small or there is too much unnecessary margin.
 - simplify_background_clutter: suitable when background clutter or competing objects distract from the subject.
 - golden_ratio_visual_flow: suitable when an organic off-center flow is plausible, but avoid this if the image has no meaningful structure.
+- high_angle_environmental_view: suitable when a higher viewpoint could reveal the subject's environment, ground pattern, table, stairs, road, shoreline, or spatial layout.
+- low_angle_subject_emphasis: suitable for standing people, architecture, statues, trees, or tall structures where a lower viewpoint could increase subject presence.
+- bird_eye_top_down_layout: suitable only when an overhead or near-overhead view is plausible and would clarify layout, patterns, paths, tables, roads, or ground relationships.
+- three_quarter_side_view_depth: suitable when the current view is flat or front-facing and a side shift could reveal depth, diagonal planes, or background parallax.
+- portrait_landscape_orientation_reframe: suitable when switching between vertical and horizontal framing would better fit the subject, scene direction, or dominant visual lines.
 
 Return only one JSON object:
 {
@@ -217,7 +222,10 @@ def build_generation_prompt(prompt_record):
         "needed for recomposition. Do not change the main subject identity. Do not remove "
         "the main subject. Do not add new important subjects. Do not turn the image into an "
         "illustration, painting, poster, or stylized artwork. The result should look like a "
-        "natural real photograph, but the composition should be visibly different from the input."
+        "natural real photograph, but the composition should be visibly different from the input. "
+        "Keep the output pixel size and visual scale close to the original image; do not simply "
+        "upscale the photo. You may switch between portrait and landscape framing when the "
+        "composition instruction calls for it."
     )
     return (
         f"{general_constraint}\n\n"
