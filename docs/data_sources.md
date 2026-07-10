@@ -208,4 +208,4 @@ python3 scripts/match_reframegen_prompts_vlm.py \
 
 Then generate from `reframegen_pilot_seedream_strong_matched_20.jsonl` with `scripts/generate_reframegen_seedream.py`.
 
-The generation script defaults to `--size source`, which keeps the output pixel size close to the input image instead of forcing 2K upscaling. The prompts may still request a portrait/landscape reframing when compositionally useful.
+The generation script defaults to `--size source`, which keeps the source aspect ratio. If the source image is below Seedream 5.0's minimum pixel requirement, the requested size is scaled up proportionally to at least `3,686,400` pixels. The prompts may still request a portrait/landscape reframing when compositionally useful.

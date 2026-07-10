@@ -13,6 +13,7 @@ import base64
 import json
 import mimetypes
 import os
+import math
 import time
 from pathlib import Path
 from urllib.parse import urlparse
@@ -22,6 +23,8 @@ import requests
 
 DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 DEFAULT_MODEL = "doubao-seedream-5-0-260128"
+DEFAULT_MIN_PIXELS = 3686400
+DEFAULT_SIZE_MULTIPLE = 64
 
 def read_jsonl(path):
     records = []
@@ -45,12 +48,29 @@ def endpoint_url(base_url):
     return base_url.rstrip("/") + "/images/generations"
 
 
-def resolve_output_size(size, source_image_path):
+def round_up(value, multiple):
+    if multiple <= 1:
+        return int(math.ceil(value))
+    return int(math.ceil(value / multiple) * multiple)
+
+
+def resolve_output_size(size, source_image_path, min_pixels=DEFAULT_MIN_PIXELS, multiple=DEFAULT_SIZE_MULTIPLE):
     if str(size).lower() not in {"source", "input", "same"}:
         return size
     with Image.open(source_image_path) as image:
         width, height = image.size
-    return f"{width}x{height}"
+    if width * height >= min_pixels:
+        return f"{width}x{height}"
+
+    scale = math.sqrt(min_pixels / (width * height))
+    scaled_width = round_up(width * scale, multiple)
+    scaled_height = round_up(height * scale, multiple)
+    while scaled_width * scaled_height < min_pixels:
+        if width >= height:
+            scaled_width += multiple
+        else:
+            scaled_height += multiple
+    return f"{scaled_width}x{scaled_height}"
 
 
 def build_payload(task, image_url, args, source_image_path):
@@ -58,7 +78,7 @@ def build_payload(task, image_url, args, source_image_path):
         "model": args.model,
         "prompt": task["generation_prompt"],
         "n": 1,
-        "size": resolve_output_size(args.size, source_image_path),
+        "size": resolve_output_size(args.size, source_image_path, args.min_pixels, args.size_multiple),
         "response_format": args.response_format,
     }
     if args.seed is not None:
@@ -225,6 +245,8 @@ def main():
         default=os.getenv("SEEDREAM_SIZE", "source"),
         help="Use 'source' to request the input image pixel size, or pass a provider-supported size such as 2K or 1024x1536.",
     )
+    parser.add_argument("--min-pixels", type=int, default=int(os.getenv("SEEDREAM_MIN_PIXELS", DEFAULT_MIN_PIXELS)))
+    parser.add_argument("--size-multiple", type=int, default=int(os.getenv("SEEDREAM_SIZE_MULTIPLE", DEFAULT_SIZE_MULTIPLE)))
     parser.add_argument("--response-format", default=os.getenv("SEEDREAM_RESPONSE_FORMAT", "b64_json"))
     parser.add_argument("--extra-payload", help="JSON object merged into every API payload.")
     parser.add_argument("--timeout", type=float, default=120.0)
