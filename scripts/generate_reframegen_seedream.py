@@ -19,9 +19,8 @@ from urllib.parse import urlparse
 
 import requests
 
-
-DEFAULT_BASE_URL = "https://ark.ap-southeast.bytepluses.com/api/v3"
-DEFAULT_MODEL = "doubao-seedream-4-0"
+DEFAULT_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+DEFAULT_MODEL = "doubao-seedream-5-0-260128"
 
 def read_jsonl(path):
     records = []
@@ -118,6 +117,7 @@ def call_seedream(task, args, session):
     for attempt in range(args.retries + 1):
         try:
             response = session.post(
+                # args.base_url,
                 endpoint_url(args.base_url),
                 headers=headers,
                 json=payload,
@@ -149,7 +149,11 @@ def call_seedream(task, args, session):
 def read_existing_ids(path):
     if not path.exists():
         return set()
-    return {record["id"] for record in read_jsonl(path)}
+    ids = set()
+    for record in read_jsonl(path):
+        if record.get("generation_status") == "ok":
+            ids.add(record["id"])
+    return ids
 
 
 def write_summary(path, tasks, completed, errors, args):
@@ -176,7 +180,7 @@ def main():
     parser.add_argument(
         "--dataset-root",
         type=Path,
-        default=Path(os.getenv("AESRECON_DATASET_ROOT", "/Users/jacci_loopy/Downloads/AesRecon_dataset")),
+        default=Path(os.getenv("AESRECON_DATASET_ROOT", "../../shared/ai-camera/AesRecon_dataset")),
     )
     parser.add_argument(
         "--output-jsonl",
