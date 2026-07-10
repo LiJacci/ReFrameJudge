@@ -17,6 +17,13 @@ from pathlib import Path
 
 OPENAI_API_KEY_DEFAULT = ""
 OPENAI_BASE_URL_DEFAULT = "https://www.aifast.club/v1"
+VIEWPOINT_PROMPT_IDS = {
+    "high_angle_environmental_view",
+    "low_angle_subject_emphasis",
+    "bird_eye_top_down_layout",
+    "three_quarter_side_view_depth",
+    "portrait_landscape_orientation_reframe",
+}
 
 MATCHING_PROMPT = """You are a photography composition editor.
 
@@ -137,9 +144,19 @@ def prompt_bank_brief(prompt_bank):
     ]
 
 
-def build_messages(source_image_path, prompt_bank, top_k):
+def build_messages(source_image_path, prompt_bank, top_k, require_viewpoint):
+    viewpoint_instruction = ""
+    if require_viewpoint:
+        viewpoint_instruction = (
+            "\n\nPilot requirement: include at least one viewpoint or orientation prompt in the returned matches "
+            "when it is physically plausible for the scene. Viewpoint/orientation prompts are: "
+            + ", ".join(sorted(VIEWPOINT_PROMPT_IDS))
+            + ". Choose the most plausible viewpoint prompt and explain the visible evidence. "
+            "The other returned prompt may be the best non-viewpoint composition prompt."
+        )
     text = (
         MATCHING_PROMPT
+        + viewpoint_instruction
         + "\n\n"
         + f"Return exactly {top_k} matched prompts.\n\n"
         + "Available prompts:\n"
@@ -210,6 +227,15 @@ def normalize_matches(raw, prompt_ids, top_k):
         )
     matches.sort(key=lambda item: (-item["applicability_score"], item["prompt_id"]))
     return diagnosis, matches[:top_k]
+
+
+def require_viewpoint_match(matches, source_id):
+    if any(match["prompt_id"] in VIEWPOINT_PROMPT_IDS for match in matches):
+        return
+    raise ValueError(
+        f"{source_id} did not return a viewpoint/orientation prompt. "
+        "Try rerunning, increasing top-k, or disabling --require-viewpoint."
+    )
 
 
 def build_generation_prompt(prompt_record):
@@ -310,6 +336,11 @@ def main():
     parser.add_argument("--output-ext", default=".png")
     parser.add_argument("--candidate-tag", default="seedream")
     parser.add_argument("--top-k", type=int, default=3)
+    parser.add_argument(
+        "--require-viewpoint",
+        action="store_true",
+        help="Require at least one high/low/bird-eye/side-view/orientation prompt per source.",
+    )
     parser.add_argument("--limit-sources", type=int)
     parser.add_argument("--check-images", action="store_true")
     parser.add_argument("--api-key-env", default="OPENAI_API_KEY")
@@ -357,7 +388,7 @@ def main():
                 content, raw_response = call_model(
                     client,
                     args.model,
-                    build_messages(source_image_path, prompt_bank, args.top_k),
+                    build_messages(source_image_path, prompt_bank, args.top_k, args.require_viewpoint),
                     args.temperature,
                     args.max_tokens,
                     args.retries,
@@ -367,6 +398,8 @@ def main():
                 diagnosis, matches = normalize_matches(parsed, prompt_ids, args.top_k)
                 if len(matches) < args.top_k:
                     raise ValueError(f"Only {len(matches)} valid matches returned")
+                if args.require_viewpoint:
+                    require_viewpoint_match(matches, source["id"])
                 error = ""
             except Exception as exc:  # noqa: BLE001
                 if not args.continue_on_error:
