@@ -102,3 +102,35 @@ For China Volcengine Ark, set `SEEDREAM_BASE_URL` to the region endpoint, for ex
 ```text
 https://ark.cn-beijing.volces.com/api/v3
 ```
+
+## Strong Recomposition Pilot
+
+The prompt bank now asks for visible geometric recomposition rather than subtle retouching. Before regenerating all 150 candidates, run a 10-source / 20-candidate pilot:
+
+```bash
+export OPENAI_API_KEY="your_api_key"
+export AESRECON_DATASET_ROOT="/path/to/AesRecon_dataset"
+
+python3 scripts/match_reframegen_prompts_vlm.py \
+  --check-images \
+  --limit-sources 10 \
+  --top-k 2 \
+  --candidate-tag seedream_strong \
+  --output-image-dir data/reframejudge_v1/generated/reframegen_pilot_seedream_strong20/images \
+  --output-jsonl data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_matched_20.jsonl \
+  --raw-jsonl outputs/reframegen_prompt_matching_strong20_raw.jsonl
+```
+
+Then validate the Seedream tasks:
+
+```bash
+python3 scripts/generate_reframegen_seedream.py \
+  --generation-manifest data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_matched_20.jsonl \
+  --output-jsonl data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_generated_20.jsonl \
+  --raw-jsonl outputs/reframegen_seedream_strong20_raw.jsonl \
+  --summary-json outputs/reframegen_seedream_strong20_summary.json \
+  --dry-run \
+  --check-images
+```
+
+Run actual generation by removing `--dry-run` after configuring `SEEDREAM_API_KEY`, `SEEDREAM_BASE_URL`, and `SEEDREAM_MODEL`.

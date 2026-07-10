@@ -1,595 +1,189 @@
-# ReFrameGen Composition Prompt Bank
+# ReFrameGen Strong Composition Prompt Bank
 
-This document collects photography-composition editing prompts for generating
-ReFrameGen pilot candidates.
+This prompt bank is designed for visible image recomposition, not subtle retouching.
 
-The goal is not generic beautification. The goal is to produce image edits with
-clear, nameable composition changes, so that generated pairs can later be judged
-by ReFrameJudge.
+The previous prompt style was too conservative: it asked the image model to preserve the same subject, pose, scene, and naturalness while making only a mild composition improvement. In practice, Seedream often produced near-duplicate images.
 
-## General Editing Constraint
-
-Use this constraint with every prompt unless the generation model requires a
-shorter instruction.
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject, identity, clothing, important objects, and scene identity.
-Do not add new important objects.
-Do not remove the main subject.
-Do not change the person identity.
-Do not turn the image into an illustration, painting, poster, or stylized artwork.
-Keep the result natural and photographically realistic.
-```
-
-## Prompt 01: Rule Of Thirds Subject Placement
-
-Principle:
-
-```text
-Rule of thirds
-```
-
-Use When:
-
-```text
-The subject is too centered, too static, or placed without visual tension.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject, identity, clothing, pose, and scene.
-Recompose the frame using rule-of-thirds placement:
-position the main subject near a vertical third line or a rule-of-thirds intersection,
-while keeping balanced surrounding space and clean frame edges.
-Do not add new important objects or change the scene identity.
-```
-
-Expected Change:
+The current prompt style uses explicit geometric operations:
 
 ```text
 subject placement
-visual balance
-cleaner framing
+canvas expansion
+crop shift
+subject scale
+horizon placement
+foreground/background layout
+visible subject-background separation
 ```
 
-Risk:
+## General Constraint
 
-```text
-May over-shift the subject or change the pose too much.
-```
-
-## Prompt 02: Active Space Directional Room
-
-Principle:
-
-```text
-Active space / lead room
-```
-
-Use When:
-
-```text
-The subject is looking, walking, facing, or moving toward one side of the image.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the image by adding active space in the direction the subject is looking,
-facing, walking, or moving.
-Avoid dead space behind the subject.
-Keep the subject visually prominent and maintain a natural photographic look.
-```
-
-Expected Change:
-
-```text
-active space
-directional balance
-less cramped subject placement
-```
-
-Risk:
-
-```text
-May invent new background content in the added space.
-```
-
-## Prompt 03: Intentional Negative Space
-
-Principle:
-
-```text
-Negative space / minimal composition
-```
-
-Use When:
-
-```text
-The background is busy or the subject lacks visual clarity.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject and scene identity.
-Recompose the image with intentional negative space around the subject.
-Simplify the background and reduce visual clutter so the subject becomes clearer,
-without changing who or what the subject is.
-```
-
-Expected Change:
-
-```text
-negative space
-simpler background
-stronger subject isolation
-```
-
-Risk:
-
-```text
-May remove meaningful context or make the scene too empty.
-```
-
-## Prompt 04: Leading Lines To Subject
-
-Principle:
-
-```text
-Leading lines
-```
-
-Use When:
-
-```text
-The scene contains roads, railings, paths, walls, rivers, shadows, or architecture.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject, scene, and important objects.
-Recompose the frame so existing roads, railings, paths, walls, rivers, shadows,
-or architectural lines act as leading lines that guide the viewer's eye toward the main subject.
-Keep the result natural and realistic.
-```
-
-Expected Change:
-
-```text
-leading lines
-clearer visual flow
-stronger focal direction
-```
-
-Risk:
-
-```text
-May distort architecture, roads, or background geometry.
-```
-
-## Prompt 05: Frame Within Frame
-
-Principle:
-
-```text
-Frame within a frame
-```
-
-Use When:
-
-```text
-The image contains doors, windows, arches, trees, mirrors, railings, or car frames.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the image using a frame-within-frame structure,
-where existing elements such as a doorway, window, arch, tree branches, railing,
-mirror, or car window naturally frame the main subject.
-Avoid adding unrealistic objects.
-```
-
-Expected Change:
-
-```text
-natural framing
-subject isolation
-stronger visual focus
-```
-
-Risk:
-
-```text
-May add fake frame elements that were not present in the scene.
-```
-
-## Prompt 06: Foreground Depth Layering
-
-Principle:
-
-```text
-Foreground, middle-ground, background layering
-```
-
-Use When:
-
-```text
-The photo feels flat or lacks depth.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject and scene.
-Recompose the image with clearer foreground, middle-ground, and background layering.
-Use subtle foreground elements to create depth,
-but keep the main subject unobstructed and visually dominant.
-```
-
-Expected Change:
-
-```text
-spatial depth
-foreground layering
-stronger subject separation
-```
-
-Risk:
-
-```text
-May introduce foreground occlusion or unwanted blur.
-```
-
-## Prompt 07: Centered Symmetry
-
-Principle:
-
-```text
-Centered composition and symmetry
-```
-
-Use When:
-
-```text
-The scene has architecture, corridors, staircases, reflections, doors, or balanced structures.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the frame with centered symmetry when suitable:
-align the subject with a symmetrical background, corridor, doorway, staircase,
-reflection, or architectural structure.
-Keep both sides of the frame visually balanced.
-```
-
-Expected Change:
-
-```text
-symmetry
-centered visual stability
-architectural balance
-```
-
-Risk:
-
-```text
-Not suitable for scenes without naturally symmetrical structure.
-```
-
-## Prompt 08: Diagonal Dynamic Composition
-
-Principle:
-
-```text
-Diagonals and dynamic visual structure
-```
-
-Use When:
-
-```text
-The image has paths, railings, shorelines, shadows, body lines, or architectural edges.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject, clothing, pose as much as possible, and scene identity.
-Recompose the image with a stronger diagonal structure,
-using the subject's body line, road, railing, shadow, shoreline,
-or architectural edge to create a more dynamic visual flow.
-```
-
-Expected Change:
-
-```text
-diagonal structure
-dynamic balance
-visual movement
-```
-
-Risk:
-
-```text
-May alter the subject pose or rotate the scene unnaturally.
-```
-
-## Prompt 09: Edge Control Clean Crop
-
-Principle:
-
-```text
-Edge control / clean cropping
-```
-
-Use When:
-
-```text
-The subject's head, hands, feet, joints, or important objects are awkwardly cut off.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the frame with better edge control:
-avoid awkwardly cutting off the head, hands, feet, joints, or important objects,
-remove distracting elements near the frame edges,
-and give the subject clean breathing room.
-```
-
-Expected Change:
-
-```text
-cleaner crop
-better breathing room
-reduced edge distractions
-```
-
-Risk:
+This constraint is prepended by `scripts/match_reframegen_prompts_vlm.py` when it writes generation prompts:
 
 ```text
-May zoom out too much or invent missing body parts.
+Edit the input photo into a realistic recomposed photograph.
+Keep the same main subject identity, clothing, and overall scene semantics.
+The edited image should clearly change the composition compared with the input image.
+You may adjust camera framing, crop, canvas size, subject scale, subject placement, and surrounding background layout.
+You may extend or synthesize plausible background regions when needed for recomposition.
+Do not change the main subject identity.
+Do not remove the main subject.
+Do not add new important subjects.
+Do not turn the image into an illustration, painting, poster, or stylized artwork.
+The result should look like a natural real photograph, but the composition should be visibly different from the input.
 ```
 
-## Prompt 10: Horizon Thirds Placement
+## Strong Positive Prompts
 
-Principle:
+### rule_of_thirds_subject_placement
 
 ```text
-Horizon placement
+Recompose the photo using a clear rule-of-thirds layout.
+Move the main subject away from the center and place them near the left or right vertical third line, or near a rule-of-thirds intersection.
+Keep the subject fully visible.
+Adjust the surrounding background, crop, or canvas so there is balanced space on the opposite side.
+The final image should have visibly different subject placement from the input, not just a minor crop.
 ```
 
-Use When:
+### active_space_directional_room
 
 ```text
-Outdoor photos with visible horizon, waterline, skyline, road boundary, or wall boundary.
+Recompose the photo by creating clear active space in the direction the subject is facing, looking, walking, or moving.
+Place the subject on one side of the frame.
+Expand or synthesize realistic background space in front of the subject's gaze or movement direction, and reduce unnecessary space behind the subject.
+The edited image should show an obvious new balance between the subject and open space.
 ```
 
-Prompt:
+### intentional_negative_space
 
 ```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the image by placing the horizon or major horizontal boundary
-near the upper or lower third of the frame,
-instead of cutting through the subject or sitting awkwardly across the center.
-Keep the subject clear and the scene natural.
+Recompose the photo into a stronger negative-space composition.
+Make the main subject occupy a smaller portion of the frame, around 20-35% of the image height when appropriate.
+Add or preserve a large clean area of realistic background around the subject.
+Place the subject off-center so the empty space feels intentional.
+The final image should look like a deliberate wide composition, not a close duplicate of the input.
 ```
 
-Expected Change:
+### leading_lines_to_subject
 
 ```text
-horizon control
-better vertical balance
-less awkward background alignment
+Recompose the photo to make visible leading lines guide attention toward the main subject.
+Adjust the camera framing, crop, and subject placement so roads, railings, paths, walls, rivers, shadows, stairs, or architectural edges point toward the subject.
+If needed, widen the frame or shift the crop to include more of these linear elements.
+The edited image should clearly emphasize the leading-line structure, not merely preserve the original framing.
 ```
 
-Risk:
+### frame_within_frame
 
 ```text
-Not useful when the image has no clear horizon or horizontal boundary.
+Recompose the photo using a clear frame-within-frame composition.
+Place the main subject inside a visible natural frame, such as a doorway, window, arch, tree opening, railing structure, mirror, or car window.
+Adjust the crop, camera distance, or surrounding background so the frame element clearly surrounds or contains the subject.
+Do not add unrealistic objects, but you may extend plausible existing structures to complete the frame.
+The edited image should make the framing structure visibly stronger than in the input.
 ```
 
-## Prompt 11: Subject Background Separation
+### foreground_depth_layering
 
-Principle:
-
-```text
-Subject-background separation
-```
-
-Use When:
-
-```text
-The subject blends into the background or background objects intersect the subject.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same main subject and scene identity.
-Recompose the image to improve subject-background separation:
-reduce background clutter behind the subject,
-avoid objects visually merging with the head or body,
-and make the subject read clearly at first glance.
-```
-
-Expected Change:
-
-```text
-cleaner background
-stronger subject isolation
-clearer visual hierarchy
-```
-
-Risk:
-
-```text
-May remove scene context or over-blur the background.
-```
-
-## Prompt 12: Fill The Frame Subject Prominence
-
-Principle:
-
-```text
-Fill the frame
-```
-
-Use When:
-
-```text
-The subject is too small or the image has unnecessary empty margins.
-```
-
-Prompt:
-
-```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject identity, clothing, expression, and scene.
-Recompose by filling more of the frame with the main subject,
-reducing unnecessary empty margins and background clutter,
-while avoiding an overly tight or awkward crop.
-```
-
-Expected Change:
-
-```text
-larger subject
-stronger prominence
-less wasted space
-```
-
-Risk:
-
-```text
-May crop too tightly or lose environmental context.
-```
-
-## Prompt 13: Simplify Background Clutter
-
-Principle:
-
-```text
-Simplicity and background control
-```
-
-Use When:
-
 ```text
-The background has many competing objects, overlapping shapes, or distracting details.
+Recompose the photo with a stronger foreground-middle-ground-background structure.
+Adjust the framing so there is a visible foreground layer, the main subject in the middle ground, and a coherent background layer.
+Use existing scene elements such as flowers, railing, rocks, branches, pavement, furniture, or architecture as foreground depth cues.
+Keep the subject unobstructed.
+The final composition should have noticeably more spatial depth than the input.
 ```
 
-Prompt:
+### centered_symmetry
 
 ```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and overall scene.
-Recompose the image to simplify the background:
-reduce distracting clutter, overlapping objects, and competing visual elements,
-while keeping the main subject, setting, and natural photo style intact.
+Recompose the photo into a clear centered symmetrical composition.
+Place the main subject on the central vertical axis.
+Align the background architecture, doorway, corridor, staircase, reflection, trees, or structural elements symmetrically around the subject.
+Adjust the crop and camera position so both sides of the frame feel balanced.
+The edited image should look intentionally symmetrical, not just slightly straighter.
 ```
 
-Expected Change:
+### diagonal_dynamic_composition
 
 ```text
-cleaner background
-reduced clutter
-clearer subject priority
+Recompose the photo with a clear diagonal visual structure.
+Shift the camera framing or crop so the subject, road, railing, shoreline, shadow, staircase, or architectural edge forms a strong diagonal across the image.
+Place the subject along or near this diagonal path.
+The final image should show a more dynamic diagonal flow than the input composition.
 ```
 
-Risk:
+### edge_control_clean_crop
 
 ```text
-May erase important contextual objects.
+Recompose the photo with clear edge control and a cleaner crop.
+Zoom out or expand the canvas if needed so the subject's head, hands, feet, joints, and important objects are not awkwardly cut off.
+Remove or reduce distracting elements near the frame edges.
+Give the subject visible breathing room on all important sides.
+The edited image should clearly fix edge crowding or awkward cropping from the input.
 ```
 
-## Prompt 14: Golden Ratio Visual Flow
+### horizon_thirds_placement
 
-Principle:
-
 ```text
-Golden ratio inspired visual flow
+Recompose the photo with deliberate horizon placement.
+Move the horizon, skyline, waterline, road boundary, or major horizontal boundary close to the upper or lower third of the image.
+Avoid placing the horizon through the subject's head or exactly through the center of the frame.
+Adjust crop or canvas expansion so the vertical balance is visibly different from the input.
 ```
 
-Use When:
+### subject_background_separation
 
 ```text
-The image needs a less rigid off-center composition than rule of thirds.
+Recompose the photo to create stronger subject-background separation.
+Move the subject or adjust the camera framing so the subject no longer overlaps with distracting background objects.
+Create cleaner space around the head and body.
+Reduce visual tangents, mergers, and clutter directly behind the subject.
+The edited image should make the subject stand out more clearly than in the input.
 ```
 
-Prompt:
+### fill_the_frame_subject_prominence
 
 ```text
-Edit the input photo as a realistic photograph.
-Preserve the same subject and scene.
-Recompose the image with a golden-ratio-inspired visual flow:
-place the main focal point slightly off-center
-and arrange surrounding lines, space, or background elements
-so the viewer's eye moves naturally toward the subject.
+Recompose the photo by making the main subject more dominant in the frame.
+Increase the subject scale so the subject occupies about 45-65% of the image height when appropriate.
+Reduce excessive empty margins and unnecessary background.
+Keep the full important body parts visible unless a natural portrait crop is more appropriate.
+The edited image should clearly shift from a loose composition to a stronger subject-focused composition.
 ```
 
-Expected Change:
+### simplify_background_clutter
 
 ```text
-off-center focal point
-curved or progressive visual flow
-more organic balance
+Recompose the photo with a simpler, cleaner background.
+Adjust the framing, crop, or subject placement to reduce background clutter and competing visual elements.
+Move the subject away from busy background areas when possible.
+Keep the same general setting, but make the background visually quieter and less distracting.
+The edited image should show a clearer difference in background organization than the input.
 ```
 
-Risk:
+### golden_ratio_visual_flow
 
 ```text
-This instruction may be abstract for some image editing models.
+Recompose the photo with a golden-ratio-inspired visual flow.
+Place the main subject noticeably off-center, around a golden-ratio focal area rather than the exact center.
+Arrange surrounding space, lines, or background elements so the viewer's eye naturally moves toward the subject.
+Adjust the crop or canvas so the image has a new organic visual flow.
+The edited image should be visibly different from the input and not just a subtle cleanup.
 ```
-
-## Suggested Pilot Selection
 
-For the first ReFrameGen pilot, use positive composition prompts only.
+## Pilot Recommendation
 
-Do not assign prompts randomly. Each source image should first be diagnosed by a
-vision-language model, then matched to the prompts whose `Use When` conditions
-are actually visible in the image.
+Do not regenerate all 150 candidates immediately. First run a 10-source / 20-candidate pilot:
 
-Recommended workflow:
-
-```text
-1. Diagnose source image composition.
-2. Score every positive prompt for applicability.
-3. Select the top 3 prompts per source image.
-4. Generate 3 edited candidates per source with Seedream.
-5. Label the resulting source-edited pairs with a VLM or human review.
-```
-
-Expected pilot size:
-
-```text
-50 source images * 3 matched prompts = 150 generated candidates
+```bash
+python3 scripts/match_reframegen_prompts_vlm.py \
+  --check-images \
+  --limit-sources 10 \
+  --top-k 2 \
+  --candidate-tag seedream_strong \
+  --output-image-dir data/reframejudge_v1/generated/reframegen_pilot_seedream_strong20/images \
+  --output-jsonl data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_matched_20.jsonl \
+  --raw-jsonl outputs/reframegen_prompt_matching_strong20_raw.jsonl
 ```
-
-## References
 
-- PetaPixel, "28 Composition Techniques That Will Improve Your Photos": https://petapixel.com/photography-composition-techniques/
-- Digital Photography School, "Rule of Thirds in Photography": https://digital-photography-school.com/rule-of-thirds/
-- SLR Lounge, "Rule of Thirds Definition": https://www.slrlounge.com/glossary/rule-of-thirds-definition/
-- Depositphotos, "10 Composition Rules in Photography": https://blog.depositphotos.com/back-to-basics-10-composition-rules-in-photography.html
-- Digital Camera World, "I judged my local photo competition": https://www.digitalcameraworld.com/photography/awards-and-competitions/i-judged-my-local-photo-competition-here-are-my-top-tips-to-climb-up-the-ranks
+Then run Seedream from the strong matched manifest.

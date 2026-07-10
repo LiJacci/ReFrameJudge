@@ -192,3 +192,18 @@ python3 scripts/generate_reframegen_seedream.py \
 ```
 
 Remove `--dry-run` and configure `SEEDREAM_API_KEY`, `SEEDREAM_BASE_URL`, and `SEEDREAM_MODEL` to call the actual Seedream endpoint.
+
+For the stronger recomposition pilot, first test 10 source images with 2 matched prompts each:
+
+```bash
+python3 scripts/match_reframegen_prompts_vlm.py \
+  --check-images \
+  --limit-sources 10 \
+  --top-k 2 \
+  --candidate-tag seedream_strong \
+  --output-image-dir data/reframejudge_v1/generated/reframegen_pilot_seedream_strong20/images \
+  --output-jsonl data/reframejudge_v1/generated_manifests/reframegen_pilot_seedream_strong_matched_20.jsonl \
+  --raw-jsonl outputs/reframegen_prompt_matching_strong20_raw.jsonl
+```
+
+Then generate from `reframegen_pilot_seedream_strong_matched_20.jsonl` with `scripts/generate_reframegen_seedream.py`.

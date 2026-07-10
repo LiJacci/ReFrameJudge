@@ -209,26 +209,39 @@ def normalize_matches(raw, prompt_ids, top_k):
 
 def build_generation_prompt(prompt_record):
     general_constraint = (
-        "Edit the input photo as a realistic photograph. Preserve the same main subject, "
-        "identity, clothing, important objects, and scene identity. Do not add new important "
-        "objects. Do not remove the main subject. Do not change the person identity. Do not "
-        "turn the image into an illustration, painting, poster, or stylized artwork. Keep "
-        "the result natural and photographically realistic."
+        "Edit the input photo into a realistic recomposed photograph. Keep the same main "
+        "subject identity, clothing, and overall scene semantics. The edited image should "
+        "clearly change the composition compared with the input image. You may adjust camera "
+        "framing, crop, canvas size, subject scale, subject placement, and surrounding "
+        "background layout. You may extend or synthesize plausible background regions when "
+        "needed for recomposition. Do not change the main subject identity. Do not remove "
+        "the main subject. Do not add new important subjects. Do not turn the image into an "
+        "illustration, painting, poster, or stylized artwork. The result should look like a "
+        "natural real photograph, but the composition should be visibly different from the input."
     )
     return (
         f"{general_constraint}\n\n"
         f"Composition principle: {prompt_record['principle']}.\n"
         f"Editing instruction: {prompt_record['prompt']}\n\n"
-        "Make the composition change visible but not extreme. Keep the output as a natural "
-        "real photo rather than a stylized reinterpretation."
+        "Prioritize a visible geometric composition change over subtle retouching. Keep the "
+        "output as a natural real photo rather than a stylized reinterpretation."
     )
 
 
-def make_generation_records(source, diagnosis, matches, prompt_by_id, model, output_image_dir, output_ext):
+def make_generation_records(
+    source,
+    diagnosis,
+    matches,
+    prompt_by_id,
+    model,
+    output_image_dir,
+    output_ext,
+    candidate_tag,
+):
     records = []
     for index, match in enumerate(matches, 1):
         prompt_record = prompt_by_id[match["prompt_id"]]
-        candidate_id = f"{source['id']}_seedream_{index:02d}"
+        candidate_id = f"{source['id']}_{candidate_tag}_{index:02d}"
         records.append(
             {
                 "id": candidate_id,
@@ -287,6 +300,7 @@ def main():
         default=Path("data/reframejudge_v1/generated/reframegen_pilot_seedream/images"),
     )
     parser.add_argument("--output-ext", default=".png")
+    parser.add_argument("--candidate-tag", default="seedream")
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--limit-sources", type=int)
     parser.add_argument("--check-images", action="store_true")
@@ -377,6 +391,7 @@ def main():
                     args.seedream_model,
                     args.output_image_dir,
                     args.output_ext,
+                    args.candidate_tag,
                 )
             )
 
