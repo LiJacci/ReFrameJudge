@@ -186,17 +186,23 @@ def normalize_source_candidate_output(raw):
 
 def normalize_blind_ab_output(raw):
     choice = str(raw.get("choice", "")).strip().upper()
+    score = clamp_float(raw.get("preference_score", raw.get("improvement_score")), -2, 2, 0)
     if choice not in {"A", "B", "TIE"}:
-        score = clamp_float(raw.get("preference_score", raw.get("improvement_score")), -2, 2, 0)
         if score > 0.25:
             choice = "B"
         elif score < -0.25:
             choice = "A"
         else:
             choice = "TIE"
+    elif choice == "A" and score > 0:
+        score = -score
+    elif choice == "B" and score < 0:
+        score = -score
+    elif choice == "TIE":
+        score = 0.0
     return {
         "choice": "tie" if choice == "TIE" else choice,
-        "preference_score": clamp_float(raw.get("preference_score", raw.get("improvement_score")), -2, 2, 0),
+        "preference_score": score,
         "composition_gain": clamp_int(raw.get("composition_gain"), 1, 5, 3),
         "content_preservation": clamp_int(
             raw.get("content_preservation", raw.get("content_coverage")),
