@@ -66,6 +66,35 @@ Rules:
 - Keep reason concise.
 """
 
+BLIND_AB_PROMPT = """You are an expert evaluator for photographic composition and image quality.
+
+You will receive two candidate images, A and B. They are two possible versions of a similar visual scene. Do not assume either image is the original or the edited version.
+
+Judge which candidate is better overall. Consider:
+- Composition: framing, subject placement, balance, crop, empty space, visual focus, leading lines.
+- Content coverage: whether important subject and scene information are preserved.
+- Visual naturalness: artifacts, lighting, perspective, texture, realism, and awkward generated details.
+
+Return only one valid JSON object:
+{
+  "choice": "A|B|tie",
+  "preference_score": 0,
+  "composition_gain": 3,
+  "content_preservation": 5,
+  "visual_naturalness": 5,
+  "issue_tags": [],
+  "reason": ""
+}
+
+Rules:
+- "A": Candidate A is clearly better overall.
+- "B": Candidate B is clearly better overall.
+- "tie": no clear winner, or a composition advantage is offset by content/quality loss.
+- preference_score must be from -2 to 2, where negative favors A, positive favors B, and 0 means tie.
+- composition_gain, content_preservation, and visual_naturalness must be integers from 1 to 5.
+- Keep reason concise.
+"""
+
 
 def read_jsonl(path, max_samples=None, seed=42):
     records = []
@@ -90,9 +119,9 @@ def resolve_image_path(project_root, image_path):
     return (project_root / path).resolve()
 
 
-def load_prompt(path):
+def load_prompt(path, judge_mode):
     if path is None:
-        return DEFAULT_PROMPT
+        return BLIND_AB_PROMPT if judge_mode == "blind_ab" else DEFAULT_PROMPT
     return path.read_text(encoding="utf-8")
 
 
@@ -123,7 +152,7 @@ def clamp_int(value, minimum, maximum, default):
     return int(round(clamp_float(value, minimum, maximum, default)))
 
 
-def normalize_output(raw):
+def normalize_source_candidate_output(raw):
     label = str(raw.get("overall_label", "")).strip().lower()
     if label not in LABEL_TO_ID:
         choice = str(raw.get("choice", "")).strip().lower()
@@ -155,15 +184,73 @@ def normalize_output(raw):
     }
 
 
-def build_messages(record, project_root, prompt):
+def normalize_blind_ab_output(raw):
+    choice = str(raw.get("choice", "")).strip().upper()
+    if choice not in {"A", "B", "TIE"}:
+        score = clamp_float(raw.get("preference_score", raw.get("improvement_score")), -2, 2, 0)
+        if score > 0.25:
+            choice = "B"
+        elif score < -0.25:
+            choice = "A"
+        else:
+            choice = "TIE"
+    return {
+        "choice": "tie" if choice == "TIE" else choice,
+        "preference_score": clamp_float(raw.get("preference_score", raw.get("improvement_score")), -2, 2, 0),
+        "composition_gain": clamp_int(raw.get("composition_gain"), 1, 5, 3),
+        "content_preservation": clamp_int(
+            raw.get("content_preservation", raw.get("content_coverage")),
+            1,
+            5,
+            5,
+        ),
+        "visual_naturalness": clamp_int(raw.get("visual_naturalness"), 1, 5, 5),
+        "issue_tags": raw.get("issue_tags", []) if isinstance(raw.get("issue_tags", []), list) else [],
+        "reason": str(raw.get("reason", "")),
+    }
+
+
+def candidate_roles(record, seed, shuffle_order):
+    if not shuffle_order:
+        return "source", "edited"
+    rng = random.Random(f"{seed}:{record['id']}")
+    if rng.random() < 0.5:
+        return "source", "edited"
+    return "edited", "source"
+
+
+def image_for_role(record, role):
+    if role == "source":
+        return record["source_image"]
+    if role == "edited":
+        return record["edited_image"]
+    raise ValueError(f"Unknown candidate role: {role}")
+
+
+def label_from_choice(choice, candidate_a_role, candidate_b_role):
+    if choice == "tie":
+        return "tie"
+    winning_role = candidate_a_role if choice == "A" else candidate_b_role
+    return "lose" if winning_role == "source" else "win"
+
+
+def build_messages(record, project_root, prompt, judge_mode, candidate_a_role, candidate_b_role):
+    if judge_mode == "blind_ab":
+        content = [
+            {"type": "image", "image": str(resolve_image_path(project_root, image_for_role(record, candidate_a_role)))},
+            {"type": "image", "image": str(resolve_image_path(project_root, image_for_role(record, candidate_b_role)))},
+            {"type": "text", "text": prompt},
+        ]
+    else:
+        content = [
+            {"type": "image", "image": str(resolve_image_path(project_root, record["source_image"]))},
+            {"type": "image", "image": str(resolve_image_path(project_root, record["edited_image"]))},
+            {"type": "text", "text": prompt},
+        ]
     return [
         {
             "role": "user",
-            "content": [
-                {"type": "image", "image": str(resolve_image_path(project_root, record["source_image"]))},
-                {"type": "image", "image": str(resolve_image_path(project_root, record["edited_image"]))},
-                {"type": "text", "text": prompt},
-            ],
+            "content": content,
         }
     ]
 
@@ -211,10 +298,10 @@ def load_model(args):
     return model
 
 
-def generate_one(model, processor, record, project_root, prompt, args):
+def generate_one(model, processor, record, project_root, prompt, args, candidate_a_role, candidate_b_role):
     from qwen_vl_utils import process_vision_info
 
-    messages = build_messages(record, project_root, prompt)
+    messages = build_messages(record, project_root, prompt, args.judge_mode, candidate_a_role, candidate_b_role)
     text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
     image_inputs, video_inputs = process_vision_info(messages)
     inputs = processor(
@@ -381,6 +468,12 @@ def main():
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--predictions-jsonl", type=Path)
     parser.add_argument("--prompt-file", type=Path)
+    parser.add_argument("--judge-mode", choices=["source_candidate", "blind_ab"], default="blind_ab")
+    parser.add_argument(
+        "--shuffle-order",
+        action="store_true",
+        help="For blind_ab mode, randomly assign source/edited to A/B using --seed.",
+    )
     parser.add_argument("--model-name", default="Qwen/Qwen2.5-VL-3B-Instruct")
     parser.add_argument("--adapter", type=Path, help="Optional LoRA adapter directory.")
     parser.add_argument("--hf-cache-dir", type=Path, default=Path("data/cache/huggingface"))
@@ -408,7 +501,7 @@ def main():
         os.environ["HF_ENDPOINT"] = args.hf_endpoint
 
     records = read_jsonl(args.input_jsonl, args.max_samples, args.seed)
-    prompt = load_prompt(args.prompt_file)
+    prompt = load_prompt(args.prompt_file, args.judge_mode)
 
     processor = AutoProcessor.from_pretrained(
         args.model_name,
@@ -422,9 +515,33 @@ def main():
 
     predictions = []
     for record in tqdm(records, desc="Judge pairs"):
+        candidate_a_role, candidate_b_role = candidate_roles(record, args.seed, args.shuffle_order)
         try:
-            raw_text = generate_one(model, processor, record, args.project_root.resolve(), prompt, args)
-            parsed = normalize_output(extract_json(raw_text))
+            raw_text = generate_one(
+                model,
+                processor,
+                record,
+                args.project_root.resolve(),
+                prompt,
+                args,
+                candidate_a_role,
+                candidate_b_role,
+            )
+            if args.judge_mode == "blind_ab":
+                parsed = normalize_blind_ab_output(extract_json(raw_text))
+                pred_label = label_from_choice(parsed["choice"], candidate_a_role, candidate_b_role)
+                parsed_scores = {
+                    "improvement_score": parsed["preference_score"]
+                    if candidate_b_role == "edited"
+                    else -parsed["preference_score"],
+                    "composition_gain": parsed["composition_gain"],
+                    "content_preservation": parsed["content_preservation"],
+                    "visual_naturalness": parsed["visual_naturalness"],
+                }
+            else:
+                parsed = normalize_source_candidate_output(extract_json(raw_text))
+                pred_label = parsed["overall_label"]
+                parsed_scores = {target: parsed[target] for target in REGRESSION_TARGETS}
             error = ""
         except Exception as exc:  # noqa: BLE001
             if not args.continue_on_error:
@@ -439,18 +556,23 @@ def main():
                 "issue_tags": ["inference_error"],
                 "reason": str(exc),
             }
+            pred_label = "tie"
+            parsed_scores = {target: parsed[target] for target in REGRESSION_TARGETS}
             error = str(exc)
 
         true_scores = {target: record.get(target) for target in REGRESSION_TARGETS}
-        pred_scores = {target: parsed[target] for target in REGRESSION_TARGETS}
+        pred_scores = {target: parsed_scores[target] for target in REGRESSION_TARGETS}
         predictions.append(
             {
                 "id": record["id"],
                 "source_image": record["source_image"],
                 "edited_image": record["edited_image"],
+                "candidate_a_role": candidate_a_role if args.judge_mode == "blind_ab" else None,
+                "candidate_b_role": candidate_b_role if args.judge_mode == "blind_ab" else None,
+                "choice": parsed.get("choice"),
                 "true_label": record["overall_label"],
-                "pred_label": parsed["overall_label"],
-                "correct": record["overall_label"] == parsed["overall_label"],
+                "pred_label": pred_label,
+                "correct": record["overall_label"] == pred_label,
                 "true_scores": true_scores,
                 "pred_scores": pred_scores,
                 "issue_tags": parsed["issue_tags"],
@@ -468,6 +590,8 @@ def main():
         "model": "qwen_vl_local_judge",
         "model_name": args.model_name,
         "adapter": str(args.adapter) if args.adapter else None,
+        "judge_mode": args.judge_mode,
+        "shuffle_order": args.shuffle_order,
         "input_jsonl": str(args.input_jsonl),
         "records": len(predictions),
         "max_samples": args.max_samples,

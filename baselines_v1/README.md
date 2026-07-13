@@ -112,9 +112,13 @@ Run no-LoRA evaluation on the v1 test set:
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
   --model-name Qwen/Qwen2.5-VL-3B-Instruct \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_test_predictions.jsonl \
-  --load-in-4bit --max-new-tokens 512 --temperature 0
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
 ```
 
 For a quick smoke test:
@@ -147,6 +151,7 @@ After training a LoRA adapter, evaluate it with the same script:
   --project-root . \
   --model-name Qwen/Qwen2.5-VL-3B-Instruct \
   --adapter outputs/qwen25vl3b_reframejudge_lora \
+  --judge-mode source_candidate \
   --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_test.json \
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_test_predictions.jsonl \
   --load-in-4bit \
