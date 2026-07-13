@@ -65,6 +65,46 @@ Quality report:
 reports/reframegen_seedream_strong150_quality_report.md
 ```
 
+## ReFrameJudge-v1 Combined
+
+`annotations/reframejudge_v1_combined_full.jsonl` keeps the full available ReFrameJudge-v1 data pool:
+
+```text
+FCDB 3-way crop pairs                  5000
+AesRecon-500 real-photo pairs           500
+ReFrameGen Seedream Strong150 pairs     150
+Total                                  5650
+```
+
+`annotations/reframejudge_v1_combined_balanced1000.jsonl` is the balanced pilot training/evaluation subset:
+
+```text
+FCDB 3-way crop pairs                   500
+AesRecon-500 real-photo pairs           350
+ReFrameGen Seedream Strong150 pairs     150
+Total                                  1000
+```
+
+Balanced1000 split files:
+
+```text
+splits/reframejudge_v1_combined_balanced1000_train.jsonl  800
+splits/reframejudge_v1_combined_balanced1000_val.jsonl    100
+splits/reframejudge_v1_combined_balanced1000_test.jsonl   100
+```
+
+Rebuild:
+
+```bash
+python3 scripts/build_reframejudge_v1_combined.py
+```
+
+Quality report:
+
+```text
+reports/reframejudge_v1_combined_balanced1000_report.md
+```
+
 ## ReFrameGen Pilot Sources
 
 `source_manifests/reframegen_pilot_aesrecon_sources_50.jsonl` contains 50 AesRecon poor images selected from the AesRecon test pairs that are not included in AesRecon-500.
