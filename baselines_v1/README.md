@@ -20,9 +20,9 @@ Run the ReFrameJudge-v1 combined balanced1000 baseline:
   --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
   --test-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
-  --output-json outputs/reframejudge_v1_clip_multitask_mlp.json \
-  --predictions-jsonl outputs/reframejudge_v1_clip_multitask_mlp_predictions.jsonl \
-  --checkpoint outputs/reframejudge_v1_clip_multitask_mlp.pt \
+  --output-json baselines_v1/outputs/reframejudge_v1_clip_multitask_mlp.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_clip_multitask_mlp_predictions.jsonl \
+  --checkpoint baselines_v1/outputs/reframejudge_v1_clip_multitask_mlp.pt \
   --cache data/cache/clip_embeddings_reframejudge_v1_balanced1000.npz \
   --epochs 80 \
   --patience 12
