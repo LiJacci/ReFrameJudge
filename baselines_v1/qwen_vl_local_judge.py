@@ -173,11 +173,12 @@ def load_model(args):
         "device_map": args.device_map,
         "cache_dir": args.hf_cache_dir,
         "trust_remote_code": args.trust_remote_code,
+        "local_files_only": args.local_files_only,
     }
     if args.torch_dtype != "auto":
-        model_kwargs["torch_dtype"] = getattr(torch, args.torch_dtype)
+        model_kwargs["dtype"] = getattr(torch, args.torch_dtype)
     else:
-        model_kwargs["torch_dtype"] = "auto"
+        model_kwargs["dtype"] = "auto"
 
     if args.load_in_4bit:
         from transformers import BitsAndBytesConfig
@@ -201,7 +202,11 @@ def load_model(args):
     if args.adapter:
         from peft import PeftModel
 
-        model = PeftModel.from_pretrained(model, str(args.adapter))
+        model = PeftModel.from_pretrained(
+            model,
+            str(args.adapter),
+            local_files_only=args.local_files_only,
+        )
     model.eval()
     return model
 
@@ -221,12 +226,18 @@ def generate_one(model, processor, record, project_root, prompt, args):
     )
     input_device = next(model.parameters()).device
     inputs = inputs.to(input_device)
+    do_sample = args.temperature > 0
     generation_kwargs = {
         "max_new_tokens": args.max_new_tokens,
-        "do_sample": args.temperature > 0,
+        "do_sample": do_sample,
     }
-    if args.temperature > 0:
+    if do_sample:
         generation_kwargs["temperature"] = args.temperature
+    else:
+        if hasattr(model, "generation_config") and model.generation_config is not None:
+            model.generation_config.temperature = None
+            model.generation_config.top_p = None
+            model.generation_config.top_k = None
     with torch.no_grad():
         generated_ids = model.generate(**inputs, **generation_kwargs)
     generated_ids = generated_ids[:, inputs.input_ids.shape[1] :]
@@ -384,7 +395,17 @@ def main():
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--continue-on-error", action="store_true")
+    parser.add_argument("--local-files-only", action="store_true",
+                        help="Only load models from local cache (HF_HUB_OFFLINE). "
+                             "Use after downloading weights via huggingface-cli or a mirror.")
+    parser.add_argument("--hf-endpoint", type=str, default=None,
+                        help="Hugging Face mirror endpoint (e.g. https://hf-mirror.com). "
+                             "Alternatively set the HF_ENDPOINT environment variable.")
     args = parser.parse_args()
+
+    if args.hf_endpoint:
+        import os
+        os.environ["HF_ENDPOINT"] = args.hf_endpoint
 
     records = read_jsonl(args.input_jsonl, args.max_samples, args.seed)
     prompt = load_prompt(args.prompt_file)
@@ -395,6 +416,7 @@ def main():
         min_pixels=args.min_pixels,
         max_pixels=args.max_pixels,
         trust_remote_code=args.trust_remote_code,
+        local_files_only=args.local_files_only,
     )
     model = load_model(args)
 

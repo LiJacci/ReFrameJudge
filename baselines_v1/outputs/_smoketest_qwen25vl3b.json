@@ -1,0 +1,180 @@
+{
+  "model": "qwen_vl_local_judge",
+  "model_name": "Qwen/Qwen2.5-VL-3B-Instruct",
+  "adapter": null,
+  "input_jsonl": "data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl",
+  "records": 1,
+  "max_samples": 1,
+  "temperature": 0.0,
+  "max_new_tokens": 512,
+  "min_pixels": 200704,
+  "max_pixels": 602112,
+  "load_in_4bit": true,
+  "metrics": {
+    "overall_label": {
+      "accuracy": 1.0,
+      "macro_precision": 0.3333333333333333,
+      "macro_recall": 0.3333333333333333,
+      "macro_f1": 0.3333333333333333,
+      "weighted_precision": 1.0,
+      "weighted_recall": 1.0,
+      "weighted_f1": 1.0,
+      "confusion_matrix_labels": [
+        "lose",
+        "tie",
+        "win"
+      ],
+      "confusion_matrix": [
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          1
+        ]
+      ],
+      "per_class": {
+        "lose": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "tie": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0,
+          "support": 0
+        },
+        "win": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0,
+          "support": 1
+        }
+      }
+    },
+    "regression": {
+      "improvement_score": {
+        "count": 1,
+        "mae": 0.8,
+        "pearson": null,
+        "spearman": null
+      },
+      "composition_gain": {
+        "count": 1,
+        "mae": 0.0,
+        "pearson": null,
+        "spearman": null
+      },
+      "content_preservation": {
+        "count": 1,
+        "mae": 0.0,
+        "pearson": null,
+        "spearman": null
+      },
+      "visual_naturalness": {
+        "count": 1,
+        "mae": 1.0,
+        "pearson": null,
+        "spearman": null
+      }
+    },
+    "by_subset": {
+      "reframegen_seedream_strong150": {
+        "count": 1,
+        "overall_label": {
+          "accuracy": 1.0,
+          "macro_precision": 0.3333333333333333,
+          "macro_recall": 0.3333333333333333,
+          "macro_f1": 0.3333333333333333,
+          "weighted_precision": 1.0,
+          "weighted_recall": 1.0,
+          "weighted_f1": 1.0,
+          "confusion_matrix_labels": [
+            "lose",
+            "tie",
+            "win"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              1
+            ]
+          ],
+          "per_class": {
+            "lose": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            "tie": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            "win": {
+              "precision": 1.0,
+              "recall": 1.0,
+              "f1": 1.0,
+              "support": 1
+            }
+          }
+        },
+        "regression": {
+          "improvement_score": {
+            "count": 1,
+            "mae": 0.8,
+            "pearson": null,
+            "spearman": null
+          },
+          "composition_gain": {
+            "count": 1,
+            "mae": 0.0,
+            "pearson": null,
+            "spearman": null
+          },
+          "content_preservation": {
+            "count": 1,
+            "mae": 0.0,
+            "pearson": null,
+            "spearman": null
+          },
+          "visual_naturalness": {
+            "count": 1,
+            "mae": 1.0,
+            "pearson": null,
+            "spearman": null
+          }
+        }
+      }
+    },
+    "prediction_distribution": {
+      "win": 1
+    },
+    "target_distribution": {
+      "win": 1
+    }
+  }
+}

@@ -2,6 +2,37 @@
 
 This folder contains baselines for the ReFrameJudge-v1 combined datasets. These models target the project-level evaluator interface rather than the earlier FCDB-only exploration.
 
+## Environment Setup
+
+All baselines assume a Python virtualenv at `.venvR` in the project root. Create it once from the `ReFrameJudge/` directory:
+
+```bash
+cd /path/to/ReFrameJudge
+
+# Choose one of the following to create the venv:
+python  -m venv .venvR       # if `python` points to the desired interpreter (e.g., conda base)
+python3 -m venv .venvR       # if only `python3` is available (may need `apt install python3-venv` first on Debian/Ubuntu)
+```
+
+Then install the baseline dependencies. **The `av` package must be installed from a pre-built binary wheel to avoid a FFmpeg source build that requires system `libavformat-dev` etc.:**
+
+```bash
+.venvR/bin/python -m pip install --upgrade pip setuptools wheel
+.venvR/bin/python -m pip install --only-binary :all: av
+.venvR/bin/python -m pip install -r requirements-baseline.txt
+.venvR/bin/python -m pip install -U "transformers>=4.51.0"
+```
+
+Alternatively, you can install all packages explicitly (equivalent to above):
+
+```bash
+.venvR/bin/python -m pip install --upgrade pip setuptools wheel
+.venvR/bin/python -m pip install --only-binary :all: av
+.venvR/bin/python -m pip install -U \
+    "transformers>=4.51.0" accelerate peft bitsandbytes qwen-vl-utils \
+    torch torchvision Pillow numpy scipy scikit-learn tqdm openai
+```
+
 ## CLIP Multi-task MLP
 
 This is the first supervised ReFrameJudge evaluator baseline. It freezes a CLIP image encoder, builds pairwise features from source/edited embeddings, and trains a small MLP to predict:
@@ -54,24 +85,36 @@ Recommended starting model for a 24GB GPU:
 Qwen/Qwen2.5-VL-3B-Instruct
 ```
 
-Install extra dependencies in your server environment:
+> Dependencies: follow the **Environment Setup** section at the top of this document. The baseline install (`requirements-baseline.txt` + the `av` pre-built wheel) covers everything needed by both CLIP MLP and Qwen-VL baselines.
 
+### Network / Hugging Face Mirror Tips
 ```bash
-.venvR/bin/python -m pip install -U "transformers>=4.51.0" accelerate qwen-vl-utils peft bitsandbytes
+
+export HTTP_PROXY=http://127.0.0.1:10809
+export HTTPS_PROXY=http://127.0.0.1:10809
+export NO_PROXY=localhost,127.0.0.1,.internal
+
+# 顺便把这些写进 .bashrc，下次打开终端自动生效
+echo '
+# ReFrameJudge baseline proxy for HuggingFace / OpenAI
+export HTTP_PROXY=http://127.0.0.1:10809
+export HTTPS_PROXY=http://127.0.0.1:10809
+export NO_PROXY=localhost,127.0.0.1,.internal
+' >> ~/.bashrc
+
 ```
 
 Run no-LoRA evaluation on the v1 test set:
 
 ```bash
 .venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --hf-cache-dir ./data/cache/huggingface \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
   --model-name Qwen/Qwen2.5-VL-3B-Instruct \
   --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_test.json \
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
+  --load-in-4bit --max-new-tokens 512 --temperature 0
 ```
 
 For a quick smoke test:
