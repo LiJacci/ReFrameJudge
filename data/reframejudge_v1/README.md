@@ -33,6 +33,38 @@ Quality report:
 reports/aesrecon_500_quality_report.md
 ```
 
+## ReFrameGen Seedream Strong150
+
+`annotations/reframegen_seedream_strong150.jsonl` is the first frozen generated-pair ReFrameJudge-v1 pilot subset.
+
+- Source: 50 AesRecon poor images outside AesRecon-500
+- Generated edits: 3 Seedream recompositions per source
+- Pair type: `generated_recomposition_pair`
+- Label source: VLM composition annotation
+- Annotation policy: `composition_focused_ignore_watermarks`
+- Records: 150
+- Source-level split: all 3 edits from one source stay in the same split
+
+Split files:
+
+```text
+splits/reframegen_seedream_strong150_train.jsonl  105
+splits/reframegen_seedream_strong150_val.jsonl     15
+splits/reframegen_seedream_strong150_test.jsonl    30
+```
+
+Rebuild from the VLM label output:
+
+```bash
+python3 scripts/build_reframejudge_v1_reframegen.py
+```
+
+Quality report:
+
+```text
+reports/reframegen_seedream_strong150_quality_report.md
+```
+
 ## ReFrameGen Pilot Sources
 
 `source_manifests/reframegen_pilot_aesrecon_sources_50.jsonl` contains 50 AesRecon poor images selected from the AesRecon test pairs that are not included in AesRecon-500.
