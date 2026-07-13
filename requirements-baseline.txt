@@ -3,6 +3,10 @@ Pillow
 torch
 torchvision
 transformers
+accelerate
+bitsandbytes
+peft
+qwen-vl-utils
 scikit-learn
 scipy
 tqdm
