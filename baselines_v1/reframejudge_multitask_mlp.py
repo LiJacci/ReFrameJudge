@@ -257,6 +257,7 @@ def train_model(model, train_arrays, val_arrays, args, device):
     best_score = -math.inf
     best_epoch = 0
     patience_left = args.patience
+    history = []
 
     for epoch in range(1, args.epochs + 1):
         model.train()
@@ -280,6 +281,14 @@ def train_model(model, train_arrays, val_arrays, args, device):
             total_loss += float(loss.item()) * len(x)
 
         val_metrics, _ = evaluate_model(model, val_arrays, device)
+        epoch_summary = {
+            "epoch": epoch,
+            "train_loss": float(total_loss / len(train_arrays["x"])),
+            "val_accuracy": val_metrics["overall_label"]["accuracy"],
+            "val_macro_f1": val_metrics["overall_label"]["macro_f1"],
+            "val_weighted_f1": val_metrics["overall_label"]["weighted_f1"],
+        }
+        history.append(epoch_summary)
         score = val_metrics["overall_label"]["macro_f1"]
         if score > best_score:
             best_score = score
@@ -290,7 +299,7 @@ def train_model(model, train_arrays, val_arrays, args, device):
             patience_left -= 1
 
         print(
-            f"epoch={epoch:03d} train_loss={total_loss / len(train_arrays['x']):.4f} "
+            f"epoch={epoch:03d} train_loss={epoch_summary['train_loss']:.4f} "
             f"val_macro_f1={score:.4f} val_acc={val_metrics['overall_label']['accuracy']:.4f}"
         )
         if patience_left <= 0:
@@ -299,7 +308,11 @@ def train_model(model, train_arrays, val_arrays, args, device):
 
     if best_state is not None:
         model.load_state_dict(best_state)
-    return {"best_epoch": best_epoch, "best_val_macro_f1": float(best_score)}
+    return {
+        "best_epoch": best_epoch,
+        "best_val_macro_f1": float(best_score),
+        "history": history,
+    }
 
 
 def rankdata(values):
@@ -520,13 +533,13 @@ def main():
     parser.add_argument("--hf-cache-dir", type=Path, default=Path("data/cache/huggingface"))
     parser.add_argument("--extract-batch-size", type=int, default=32)
     parser.add_argument("--train-batch-size", type=int, default=64)
-    parser.add_argument("--hidden-dim", type=int, default=512)
-    parser.add_argument("--dropout", type=float, default=0.2)
-    parser.add_argument("--epochs", type=int, default=80)
-    parser.add_argument("--patience", type=int, default=12)
-    parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--weight-decay", type=float, default=1e-4)
-    parser.add_argument("--regression-loss-weight", type=float, default=0.3)
+    parser.add_argument("--hidden-dim", type=int, default=256)
+    parser.add_argument("--dropout", type=float, default=0.3)
+    parser.add_argument("--epochs", type=int, default=100)
+    parser.add_argument("--patience", type=int, default=15)
+    parser.add_argument("--lr", type=float, default=3e-4)
+    parser.add_argument("--weight-decay", type=float, default=1e-3)
+    parser.add_argument("--regression-loss-weight", type=float, default=0.2)
     parser.add_argument("--max-grad-norm", type=float, default=5.0)
     parser.add_argument("--device", default="auto")
     parser.add_argument("--max-train", type=int)
@@ -607,6 +620,7 @@ def main():
             "epochs": args.epochs,
             "best_epoch": train_summary["best_epoch"],
             "best_val_macro_f1": train_summary["best_val_macro_f1"],
+            "history": train_summary["history"],
             "hidden_dim": args.hidden_dim,
             "dropout": args.dropout,
             "lr": args.lr,

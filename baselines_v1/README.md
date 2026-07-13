@@ -24,8 +24,13 @@ Run the ReFrameJudge-v1 combined balanced1000 baseline:
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_clip_multitask_mlp_predictions.jsonl \
   --checkpoint baselines_v1/outputs/reframejudge_v1_clip_multitask_mlp.pt \
   --cache data/cache/clip_embeddings_reframejudge_v1_balanced1000.npz \
-  --epochs 80 \
-  --patience 12
+  --hidden-dim 256 \
+  --dropout 0.3 \
+  --lr 3e-4 \
+  --weight-decay 1e-3 \
+  --regression-loss-weight 0.2 \
+  --epochs 100 \
+  --patience 15
 ```
 
 If the default local CLIP directory is unavailable, pass a Hugging Face model id:
