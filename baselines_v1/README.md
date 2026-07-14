@@ -192,6 +192,34 @@ Evaluate the trained adapter in source/candidate mode:
   --temperature 0
 ```
 
+For score-threshold calibration, also run the same source/candidate evaluation on the validation split:
+
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --judge-mode source_candidate \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+Then calibrate `lose/tie/win` from predicted `improvement_score`:
+
+```bash
+.venvR/bin/python baselines_v1/calibrate_score_labels.py \
+  --val-predictions baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val_predictions.jsonl \
+  --test-predictions baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test_predictions.jsonl \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_score_calibrated_test.json \
+  --output-predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_score_calibrated_test_predictions.jsonl \
+  --score-key improvement_score
+```
+
 Also evaluate the same adapter in blind A/B mode to measure position bias:
 
 ```bash
