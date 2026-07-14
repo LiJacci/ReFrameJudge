@@ -127,7 +127,90 @@ For a quick smoke test:
   --max-samples 10 --continue-on-error
 ```
 
-Export LoRA SFT data:
+### With LoRA Training
+
+The repository includes a lightweight Qwen2.5-VL LoRA trainer. It reads the ReFrameJudge-v1 train/val JSONL files directly, so exporting SFT data is optional.
+
+Run a small smoke test first:
+
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
+  --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
+  --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --output-dir baselines_v1/outputs/qwen25vl3b_reframejudge_lora_smoke \
+  --load-in-4bit \
+  --gradient-checkpointing \
+  --max-train-samples 8 \
+  --max-val-samples 4 \
+  --epochs 1 \
+  --gradient-accumulation-steps 2 \
+  --eval-steps 2 \
+  --save-steps 0
+```
+
+Run the full LoRA training:
+
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
+  --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
+  --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --output-dir baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --load-in-4bit \
+  --gradient-checkpointing \
+  --epochs 3 \
+  --train-batch-size 1 \
+  --gradient-accumulation-steps 8 \
+  --learning-rate 2e-4 \
+  --weight-decay 0.01 \
+  --lora-r 16 \
+  --lora-alpha 32 \
+  --lora-dropout 0.05 \
+  --eval-steps 50 \
+  --save-steps 100
+```
+
+Evaluate the trained adapter in source/candidate mode:
+
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --judge-mode source_candidate \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+Also evaluate the same adapter in blind A/B mode to measure position bias:
+
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+Optional: export LoRA SFT data for external trainers such as LLaMA-Factory or ms-swift:
 
 ```bash
 .venvR/bin/python scripts/export_reframejudge_v1_qwen_sft.py \
@@ -141,22 +224,6 @@ Export LoRA SFT data:
   --output-jsonl data/reframejudge_v1/sft/qwen_vl_val.jsonl \
   --project-root . \
   --absolute-paths
-```
-
-After training a LoRA adapter, evaluate it with the same script:
-
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
-  --adapter outputs/qwen25vl3b_reframejudge_lora \
-  --judge-mode source_candidate \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
 ```
 
 Keep the no-LoRA and w-LoRA runs on the same test split, prompt, model size, image resolution, and decoding settings.
