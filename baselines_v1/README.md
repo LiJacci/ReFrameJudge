@@ -227,3 +227,73 @@ Optional: export LoRA SFT data for external trainers such as LLaMA-Factory or ms
 ```
 
 Keep the no-LoRA and w-LoRA runs on the same test split, prompt, model size, image resolution, and decoding settings.
+
+## R2.1: Qwen2.5-VL-7B Local Judge
+1. 7B no-LoRA blind A/B
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_nolora_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_nolora_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+2. 7B LoRA r16 epoch3
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
+  --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
+  --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --output-dir baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
+  --load-in-4bit \
+  --gradient-checkpointing \
+  --epochs 3 \
+  --train-batch-size 1 \
+  --gradient-accumulation-steps 8 \
+  --learning-rate 2e-4 \
+  --weight-decay 0.01 \
+  --lora-r 16 \
+  --lora-alpha 32 \
+  --lora-dropout 0.05 \
+  --eval-steps 50 \
+  --save-steps 100
+```
+test source/edit
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
+  --judge-mode source_candidate \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_source_candidate_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+test blind A/B
+```bash
+.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
