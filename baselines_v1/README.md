@@ -8,32 +8,28 @@ All baselines assume a Python virtualenv at `.venvR` in the project root. Create
 
 ```bash
 cd /path/to/ReFrameJudge
-
-# Choose one of the following to create the venv:
-python  -m venv .venvR       # if `python` points to the desired interpreter (e.g., conda base)
-python3 -m venv .venvR       # if only `python3` is available (may need `apt install python3-venv` first on Debian/Ubuntu)
+python -m venv .venvR
 ```
 
-Then install the baseline dependencies. **The `av` package must be installed from a pre-built binary wheel to avoid a FFmpeg source build that requires system `libavformat-dev` etc.:**
+Install dependencies:
 
 ```bash
 .venvR/bin/python -m pip install --upgrade pip setuptools wheel
 .venvR/bin/python -m pip install --only-binary :all: av
 .venvR/bin/python -m pip install -r requirements-baseline.txt
-.venvR/bin/python -m pip install -U "transformers>=4.51.0"
+.venvR/bin/python -m pip install -U "transformers>=4.57.0"
 ```
 
-Alternatively, you can install all packages explicitly (equivalent to above):
+If you need a proxy or Hugging Face mirror:
 
 ```bash
-.venvR/bin/python -m pip install --upgrade pip setuptools wheel
-.venvR/bin/python -m pip install --only-binary :all: av
-.venvR/bin/python -m pip install -U \
-    "transformers>=4.51.0" accelerate peft bitsandbytes qwen-vl-utils \
-    torch torchvision Pillow numpy scipy scikit-learn tqdm openai
+export HTTP_PROXY=http://127.0.0.1:10809
+export HTTPS_PROXY=http://127.0.0.1:10809
+export NO_PROXY=localhost,127.0.0.1,.internal
+export HF_ENDPOINT=https://hf-mirror.com
 ```
 
-## CLIP Multi-task MLP
+## R1: CLIP Multi-task MLP
 
 This is the first supervised ReFrameJudge evaluator baseline. It freezes a CLIP image encoder, builds pairwise features from source/edited embeddings, and trains a small MLP to predict:
 
@@ -64,83 +60,74 @@ Run the ReFrameJudge-v1 combined balanced1000 baseline:
   --patience 15
 ```
 
-If the default local CLIP directory is unavailable, pass a Hugging Face model id:
+## R2: Qwen3.5 Local Judge
 
-```bash
-  --model-name openai/clip-vit-base-patch32
-```
-
-If you are running a quick environment check on a machine without all image folders, use `--missing-image-policy skip`. For actual reported numbers, keep the default `error` policy so missing data cannot silently change the benchmark.
-
-## R2: Qwen2.5-VL Local Judge
-
-R2 evaluates whether an open-source VLM can judge ReFrameJudge-v1 pairs better than frozen CLIP features. Run it in two stages:
-
-1. `wo LoRA`: zero-shot or prompt-only Qwen2.5-VL.
-2. `w LoRA`: the same model plus a LoRA adapter trained on ReFrameJudge-v1 train split.
-
-Recommended starting model for a 24GB GPU:
+R2 now uses Qwen3.5 multimodal models only:
 
 ```text
-Qwen/Qwen2.5-VL-3B-Instruct
+Qwen/Qwen3.5-4B
+Qwen/Qwen3.5-9B
 ```
 
-> Dependencies: follow the **Environment Setup** section at the top of this document. The baseline install (`requirements-baseline.txt` + the `av` pre-built wheel) covers everything needed by both CLIP MLP and Qwen-VL baselines.
+Run every model in two modes:
 
-### Network / Hugging Face Mirror Tips
-```bash
+1. `wo LoRA`: prompt-only zero-shot / few-shot-free judge.
+2. `w LoRA`: LoRA adapter trained on ReFrameJudge-v1 train split.
 
-export HTTP_PROXY=http://127.0.0.1:10809
-export HTTPS_PROXY=http://127.0.0.1:10809
-export NO_PROXY=localhost,127.0.0.1,.internal
+For 24GB GPUs, start with 4B. If 4B works, run 9B.
 
-# 顺便把这些写进 .bashrc，下次打开终端自动生效
-echo '
-# ReFrameJudge baseline proxy for HuggingFace / OpenAI
-export HTTP_PROXY=http://127.0.0.1:10809
-export HTTPS_PROXY=http://127.0.0.1:10809
-export NO_PROXY=localhost,127.0.0.1,.internal
-' >> ~/.bashrc
-
-```
-
-Run no-LoRA evaluation on the v1 test set:
+### Qwen3.5-4B No-LoRA Blind A/B
 
 ```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --hf-cache-dir ./data/cache/huggingface \
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --model-name Qwen/Qwen3.5-4B \
+  --hf-cache-dir ./data/cache/huggingface \
   --judge-mode blind_ab \
   --shuffle-order \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_blindab_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_nolora_blindab_test_predictions.jsonl \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_nolora_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_nolora_blindab_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
   --temperature 0
 ```
 
-For a quick smoke test:
+Smoke test:
 
 ```bash
   --max-samples 10 --continue-on-error
 ```
 
-### With LoRA Training
+### Qwen3.5-9B No-LoRA Blind A/B
 
-The repository includes a lightweight Qwen2.5-VL LoRA trainer. It reads the ReFrameJudge-v1 train/val JSONL files directly, so exporting SFT data is optional.
+```bash
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-9B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_9b_nolora_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_nolora_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+### Qwen3.5-4B LoRA Training
 
 Run a small smoke test first:
 
 ```bash
-.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
+.venvR/bin/python baselines_v1/qwen35_lora_train.py \
   --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
   --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
   --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --model-name Qwen/Qwen3.5-4B \
   --hf-cache-dir ./data/cache/huggingface \
-  --output-dir baselines_v1/outputs/qwen25vl3b_reframejudge_lora_smoke \
+  --output-dir baselines_v1/outputs/qwen35_4b_reframejudge_lora_smoke \
   --load-in-4bit \
   --gradient-checkpointing \
   --max-train-samples 8 \
@@ -151,16 +138,16 @@ Run a small smoke test first:
   --save-steps 0
 ```
 
-Run the full LoRA training:
+Full 4B LoRA training:
 
 ```bash
-.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
+.venvR/bin/python baselines_v1/qwen35_lora_train.py \
   --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
   --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
   --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --model-name Qwen/Qwen3.5-4B \
   --hf-cache-dir ./data/cache/huggingface \
-  --output-dir baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --output-dir baselines_v1/outputs/qwen35_4b_reframejudge_lora_r16_e3 \
   --load-in-4bit \
   --gradient-checkpointing \
   --epochs 3 \
@@ -171,157 +158,130 @@ Run the full LoRA training:
   --lora-r 16 \
   --lora-alpha 32 \
   --lora-dropout 0.05 \
+  --lora-target-modules all-linear \
   --eval-steps 50 \
   --save-steps 100
 ```
 
-Evaluate the trained adapter in source/candidate mode:
+Evaluate 4B LoRA in source/candidate mode:
 
 ```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --model-name Qwen/Qwen3.5-4B \
   --hf-cache-dir ./data/cache/huggingface \
-  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --adapter baselines_v1/outputs/qwen35_4b_reframejudge_lora_r16_e3 \
   --judge-mode source_candidate \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test_predictions.jsonl \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
   --temperature 0
 ```
 
-For score-threshold calibration, also run the same source/candidate evaluation on the validation split:
+Evaluate 4B LoRA in blind A/B mode:
 
 ```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-4B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen35_4b_reframejudge_lora_r16_e3 \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+### Qwen3.5-9B LoRA Training
+
+Use the same settings after 4B is verified:
+
+```bash
+.venvR/bin/python baselines_v1/qwen35_lora_train.py \
+  --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
+  --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-9B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --output-dir baselines_v1/outputs/qwen35_9b_reframejudge_lora_r16_e3 \
+  --load-in-4bit \
+  --gradient-checkpointing \
+  --epochs 3 \
+  --train-batch-size 1 \
+  --gradient-accumulation-steps 8 \
+  --learning-rate 2e-4 \
+  --weight-decay 0.01 \
+  --lora-r 16 \
+  --lora-alpha 32 \
+  --lora-dropout 0.05 \
+  --lora-target-modules all-linear \
+  --eval-steps 50 \
+  --save-steps 100
+```
+
+Evaluate 9B LoRA in source/candidate mode:
+
+```bash
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-9B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen35_9b_reframejudge_lora_r16_e3 \
+  --judge-mode source_candidate \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+Evaluate 9B LoRA in blind A/B mode:
+
+```bash
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-9B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --adapter baselines_v1/outputs/qwen35_9b_reframejudge_lora_r16_e3 \
+  --judge-mode blind_ab \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_blindab_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_blindab_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+### Score Calibration
+
+If a LoRA model gives useful `improvement_score` but weak `overall_label`, run source/candidate evaluation on the validation split and calibrate thresholds:
+
+```bash
+.venvR/bin/python baselines_v1/qwen35_local_judge.py \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
   --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
+  --model-name Qwen/Qwen3.5-4B \
   --hf-cache-dir ./data/cache/huggingface \
-  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
+  --adapter baselines_v1/outputs/qwen35_4b_reframejudge_lora_r16_e3 \
   --judge-mode source_candidate \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val_predictions.jsonl \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_val.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_val_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
   --temperature 0
-```
 
-Then calibrate `lose/tie/win` from predicted `improvement_score`:
-
-```bash
 .venvR/bin/python baselines_v1/calibrate_score_labels.py \
-  --val-predictions baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_val_predictions.jsonl \
-  --test-predictions baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_source_candidate_test_predictions.jsonl \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_score_calibrated_test.json \
-  --output-predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_score_calibrated_test_predictions.jsonl \
+  --val-predictions baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_val_predictions.jsonl \
+  --test-predictions baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_test_predictions.jsonl \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_score_calibrated_test.json \
+  --output-predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_score_calibrated_test_predictions.jsonl \
   --score-key improvement_score
-```
-
-Also evaluate the same adapter in blind A/B mode to measure position bias:
-
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-3B-Instruct \
-  --hf-cache-dir ./data/cache/huggingface \
-  --adapter baselines_v1/outputs/qwen25vl3b_reframejudge_lora \
-  --judge-mode blind_ab \
-  --shuffle-order \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_blindab_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl3b_lora_blindab_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
-```
-
-Optional: export LoRA SFT data for external trainers such as LLaMA-Factory or ms-swift:
-
-```bash
-.venvR/bin/python scripts/export_reframejudge_v1_qwen_sft.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
-  --output-jsonl data/reframejudge_v1/sft/qwen_vl_train.jsonl \
-  --project-root . \
-  --absolute-paths
-
-.venvR/bin/python scripts/export_reframejudge_v1_qwen_sft.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
-  --output-jsonl data/reframejudge_v1/sft/qwen_vl_val.jsonl \
-  --project-root . \
-  --absolute-paths
-```
-
-Keep the no-LoRA and w-LoRA runs on the same test split, prompt, model size, image resolution, and decoding settings.
-
-## R2.1: Qwen2.5-VL-7B Local Judge
-1. 7B no-LoRA blind A/B
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
-  --hf-cache-dir ./data/cache/huggingface \
-  --judge-mode blind_ab \
-  --shuffle-order \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_nolora_blindab_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_nolora_blindab_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
-```
-2. 7B LoRA r16 epoch3
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_lora_train.py \
-  --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
-  --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
-  --hf-cache-dir ./data/cache/huggingface \
-  --output-dir baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
-  --load-in-4bit \
-  --gradient-checkpointing \
-  --epochs 3 \
-  --train-batch-size 1 \
-  --gradient-accumulation-steps 8 \
-  --learning-rate 2e-4 \
-  --weight-decay 0.01 \
-  --lora-r 16 \
-  --lora-alpha 32 \
-  --lora-dropout 0.05 \
-  --eval-steps 50 \
-  --save-steps 100
-```
-test source/edit
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
-  --hf-cache-dir ./data/cache/huggingface \
-  --adapter baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
-  --judge-mode source_candidate \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_source_candidate_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_source_candidate_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
-```
-test blind A/B
-```bash
-.venvR/bin/python baselines_v1/qwen_vl_local_judge.py \
-  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
-  --project-root . \
-  --model-name Qwen/Qwen2.5-VL-7B-Instruct \
-  --hf-cache-dir ./data/cache/huggingface \
-  --adapter baselines_v1/outputs/qwen25vl7b_reframejudge_lora_r16_e3 \
-  --judge-mode blind_ab \
-  --shuffle-order \
-  --output-json baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_blindab_test.json \
-  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen25vl7b_lora_r16_e3_blindab_test_predictions.jsonl \
-  --load-in-4bit \
-  --max-new-tokens 512 \
-  --temperature 0
 ```

@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
-"""Local Qwen2.5-VL judge baseline for ReFrameJudge-v1.
-
-This script evaluates source/edited image pairs with an open-source VLM. It can
-run the base model directly or load a LoRA adapter for the same prompt format.
-"""
+"""Local Qwen3.5 judge baseline for ReFrameJudge-v1."""
 
 import argparse
 import json
+import mimetypes
 import random
 import re
 from collections import Counter, defaultdict
@@ -35,7 +32,7 @@ REGRESSION_TARGETS = [
 ]
 
 
-DEFAULT_PROMPT = """You are an expert evaluator for photographic recomposition.
+SOURCE_CANDIDATE_PROMPT = """You are an expert evaluator for photographic recomposition.
 
 You will receive two images:
 1. Source image: the original image.
@@ -65,6 +62,7 @@ Rules:
 - composition_gain, content_preservation, and visual_naturalness must be integers from 1 to 5.
 - Keep reason concise.
 """
+
 
 BLIND_AB_PROMPT = """You are an expert evaluator for photographic composition and image quality.
 
@@ -119,9 +117,16 @@ def resolve_image_path(project_root, image_path):
     return (project_root / path).resolve()
 
 
+def image_uri(path):
+    mime_type, _ = mimetypes.guess_type(path)
+    if mime_type is None:
+        mime_type = "image/jpeg"
+    return path.as_uri()
+
+
 def load_prompt(path, judge_mode):
     if path is None:
-        return BLIND_AB_PROMPT if judge_mode == "blind_ab" else DEFAULT_PROMPT
+        return BLIND_AB_PROMPT if judge_mode == "blind_ab" else SOURCE_CANDIDATE_PROMPT
     return path.read_text(encoding="utf-8")
 
 
@@ -133,7 +138,6 @@ def extract_json(text):
         return json.loads(text)
     except json.JSONDecodeError:
         pass
-
     match = re.search(r"\{.*\}", text, re.S)
     if not match:
         raise ValueError(f"No JSON object found in response: {text[:500]}")
@@ -155,19 +159,13 @@ def clamp_int(value, minimum, maximum, default):
 def normalize_source_candidate_output(raw):
     label = str(raw.get("overall_label", "")).strip().lower()
     if label not in LABEL_TO_ID:
-        choice = str(raw.get("choice", "")).strip().lower()
-        if choice in {"candidate", "candidate image", "edited", "b", "win"}:
+        score = clamp_float(raw.get("improvement_score", raw.get("preference_score")), -2, 2, 0)
+        if score > 0.25:
             label = "win"
-        elif choice in {"source", "source image", "a", "lose"}:
+        elif score < -0.25:
             label = "lose"
         else:
-            score = clamp_float(raw.get("improvement_score", raw.get("preference_score")), -2, 2, 0)
-            if score > 0.25:
-                label = "win"
-            elif score < -0.25:
-                label = "lose"
-            else:
-                label = "tie"
+            label = "tie"
     return {
         "overall_label": label,
         "improvement_score": clamp_float(raw.get("improvement_score", raw.get("preference_score")), -2, 2, 0),
@@ -242,21 +240,19 @@ def label_from_choice(choice, candidate_a_role, candidate_b_role):
 
 def build_messages(record, project_root, prompt, judge_mode, candidate_a_role, candidate_b_role):
     if judge_mode == "blind_ab":
-        content = [
-            {"type": "image", "image": str(resolve_image_path(project_root, image_for_role(record, candidate_a_role)))},
-            {"type": "image", "image": str(resolve_image_path(project_root, image_for_role(record, candidate_b_role)))},
-            {"type": "text", "text": prompt},
-        ]
+        first_image = resolve_image_path(project_root, image_for_role(record, candidate_a_role))
+        second_image = resolve_image_path(project_root, image_for_role(record, candidate_b_role))
     else:
-        content = [
-            {"type": "image", "image": str(resolve_image_path(project_root, record["source_image"]))},
-            {"type": "image", "image": str(resolve_image_path(project_root, record["edited_image"]))},
-            {"type": "text", "text": prompt},
-        ]
+        first_image = resolve_image_path(project_root, record["source_image"])
+        second_image = resolve_image_path(project_root, record["edited_image"])
     return [
         {
             "role": "user",
-            "content": content,
+            "content": [
+                {"type": "image", "url": image_uri(first_image)},
+                {"type": "image", "url": image_uri(second_image)},
+                {"type": "text", "text": prompt},
+            ],
         }
     ]
 
@@ -265,14 +261,13 @@ def load_model(args):
     model_kwargs = {
         "device_map": args.device_map,
         "cache_dir": args.hf_cache_dir,
-        "trust_remote_code": args.trust_remote_code,
         "local_files_only": args.local_files_only,
+        "trust_remote_code": args.trust_remote_code,
     }
-    if args.torch_dtype != "auto":
-        model_kwargs["dtype"] = getattr(torch, args.torch_dtype)
-    else:
+    if args.torch_dtype == "auto":
         model_kwargs["dtype"] = "auto"
-
+    else:
+        model_kwargs["dtype"] = getattr(torch, args.torch_dtype)
     if args.load_in_4bit:
         from transformers import BitsAndBytesConfig
 
@@ -282,59 +277,37 @@ def load_model(args):
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
         )
+    from transformers import AutoModelForMultimodalLM
 
-    try:
-        from transformers import Qwen2_5_VLForConditionalGeneration
-
-        model = Qwen2_5_VLForConditionalGeneration.from_pretrained(args.model_name, **model_kwargs)
-    except ImportError:
-        from transformers import AutoModelForVision2Seq
-
-        model = AutoModelForVision2Seq.from_pretrained(args.model_name, **model_kwargs)
-
+    model = AutoModelForMultimodalLM.from_pretrained(args.model_name, **model_kwargs)
     if args.adapter:
         from peft import PeftModel
 
-        model = PeftModel.from_pretrained(
-            model,
-            str(args.adapter),
-            local_files_only=args.local_files_only,
-        )
+        model = PeftModel.from_pretrained(model, str(args.adapter), local_files_only=args.local_files_only)
     model.eval()
     return model
 
 
 def generate_one(model, processor, record, project_root, prompt, args, candidate_a_role, candidate_b_role):
-    from qwen_vl_utils import process_vision_info
-
     messages = build_messages(record, project_root, prompt, args.judge_mode, candidate_a_role, candidate_b_role)
-    text = processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
-    image_inputs, video_inputs = process_vision_info(messages)
-    inputs = processor(
-        text=[text],
-        images=image_inputs,
-        videos=video_inputs,
-        padding=True,
+    inputs = processor.apply_chat_template(
+        messages,
+        add_generation_prompt=True,
+        tokenize=True,
+        return_dict=True,
         return_tensors="pt",
-    )
-    input_device = next(model.parameters()).device
-    inputs = inputs.to(input_device)
-    do_sample = args.temperature > 0
-    generation_kwargs = {
-        "max_new_tokens": args.max_new_tokens,
-        "do_sample": do_sample,
-    }
-    if do_sample:
+    ).to(next(model.parameters()).device)
+    generation_kwargs = {"max_new_tokens": args.max_new_tokens, "do_sample": args.temperature > 0}
+    if args.temperature > 0:
         generation_kwargs["temperature"] = args.temperature
-    else:
-        if hasattr(model, "generation_config") and model.generation_config is not None:
-            model.generation_config.temperature = None
-            model.generation_config.top_p = None
-            model.generation_config.top_k = None
+    elif hasattr(model, "generation_config") and model.generation_config is not None:
+        model.generation_config.temperature = None
+        model.generation_config.top_p = None
+        model.generation_config.top_k = None
     with torch.no_grad():
-        generated_ids = model.generate(**inputs, **generation_kwargs)
-    generated_ids = generated_ids[:, inputs.input_ids.shape[1] :]
-    return processor.batch_decode(generated_ids, skip_special_tokens=True, clean_up_tokenization_spaces=False)[0]
+        outputs = model.generate(**inputs, **generation_kwargs)
+    generated = outputs[0][inputs["input_ids"].shape[-1] :]
+    return processor.decode(generated, skip_special_tokens=True)
 
 
 def label_metrics(predictions):
@@ -475,47 +448,35 @@ def main():
     parser.add_argument("--predictions-jsonl", type=Path)
     parser.add_argument("--prompt-file", type=Path)
     parser.add_argument("--judge-mode", choices=["source_candidate", "blind_ab"], default="blind_ab")
-    parser.add_argument(
-        "--shuffle-order",
-        action="store_true",
-        help="For blind_ab mode, randomly assign source/edited to A/B using --seed.",
-    )
-    parser.add_argument("--model-name", default="Qwen/Qwen2.5-VL-3B-Instruct")
-    parser.add_argument("--adapter", type=Path, help="Optional LoRA adapter directory.")
+    parser.add_argument("--shuffle-order", action="store_true")
+    parser.add_argument("--model-name", default="Qwen/Qwen3.5-4B")
+    parser.add_argument("--adapter", type=Path)
     parser.add_argument("--hf-cache-dir", type=Path, default=Path("data/cache/huggingface"))
     parser.add_argument("--device-map", default="auto")
     parser.add_argument("--torch-dtype", choices=["auto", "float16", "bfloat16", "float32"], default="auto")
     parser.add_argument("--load-in-4bit", action="store_true")
     parser.add_argument("--trust-remote-code", action="store_true")
-    parser.add_argument("--min-pixels", type=int, default=256 * 28 * 28)
-    parser.add_argument("--max-pixels", type=int, default=768 * 28 * 28)
+    parser.add_argument("--local-files-only", action="store_true")
     parser.add_argument("--max-new-tokens", type=int, default=512)
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--continue-on-error", action="store_true")
-    parser.add_argument("--local-files-only", action="store_true",
-                        help="Only load models from local cache (HF_HUB_OFFLINE). "
-                             "Use after downloading weights via huggingface-cli or a mirror.")
-    parser.add_argument("--hf-endpoint", type=str, default=None,
-                        help="Hugging Face mirror endpoint (e.g. https://hf-mirror.com). "
-                             "Alternatively set the HF_ENDPOINT environment variable.")
+    parser.add_argument("--hf-endpoint")
     args = parser.parse_args()
 
     if args.hf_endpoint:
         import os
+
         os.environ["HF_ENDPOINT"] = args.hf_endpoint
 
     records = read_jsonl(args.input_jsonl, args.max_samples, args.seed)
     prompt = load_prompt(args.prompt_file, args.judge_mode)
-
     processor = AutoProcessor.from_pretrained(
         args.model_name,
         cache_dir=args.hf_cache_dir,
-        min_pixels=args.min_pixels,
-        max_pixels=args.max_pixels,
-        trust_remote_code=args.trust_remote_code,
         local_files_only=args.local_files_only,
+        trust_remote_code=args.trust_remote_code,
     )
     model = load_model(args)
 
@@ -567,7 +528,6 @@ def main():
             error = str(exc)
 
         true_scores = {target: record.get(target) for target in REGRESSION_TARGETS}
-        pred_scores = {target: parsed_scores[target] for target in REGRESSION_TARGETS}
         predictions.append(
             {
                 "id": record["id"],
@@ -580,7 +540,7 @@ def main():
                 "pred_label": pred_label,
                 "correct": record["overall_label"] == pred_label,
                 "true_scores": true_scores,
-                "pred_scores": pred_scores,
+                "pred_scores": {target: parsed_scores[target] for target in REGRESSION_TARGETS},
                 "issue_tags": parsed["issue_tags"],
                 "reason": parsed["reason"],
                 "raw_response": raw_text,
@@ -593,7 +553,7 @@ def main():
         )
 
     result = {
-        "model": "qwen_vl_local_judge",
+        "model": "qwen35_local_judge",
         "model_name": args.model_name,
         "adapter": str(args.adapter) if args.adapter else None,
         "judge_mode": args.judge_mode,
@@ -603,8 +563,6 @@ def main():
         "max_samples": args.max_samples,
         "temperature": args.temperature,
         "max_new_tokens": args.max_new_tokens,
-        "min_pixels": args.min_pixels,
-        "max_pixels": args.max_pixels,
         "load_in_4bit": args.load_in_4bit,
         "metrics": evaluate(predictions),
     }
