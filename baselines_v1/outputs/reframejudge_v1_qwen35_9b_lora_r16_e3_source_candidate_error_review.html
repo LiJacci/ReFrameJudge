@@ -1,0 +1,4848 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Qwen3.5-9B LoRA Source-Candidate Error Review</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --border: #d8dde6;
+      --ok: #e7f8ef;
+      --bad: #fff0e8;
+      --ink: #172554;
+    }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 3;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.97);
+    }
+    h1 { margin: 0; font-size: 21px; }
+    h2 { margin: 26px 0 10px; font-size: 17px; }
+    .sub { margin-top: 5px; color: var(--muted); font-size: 13px; }
+    main { max-width: 1320px; margin: 0 auto; padding: 20px; }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 12px;
+    }
+    .card-label { color: var(--muted); font-size: 12px; }
+    .card-value { margin-top: 4px; font-size: 22px; font-weight: 750; color: var(--ink); }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      font-size: 13px;
+    }
+    th, td {
+      border-bottom: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #eef1f5; }
+    .sample {
+      margin: 18px 0;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+    }
+    .sample-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--border);
+      background: var(--ok);
+      font-size: 14px;
+    }
+    .sample.wrong .sample-head { background: var(--bad); }
+    .sample-head span { margin-left: 8px; color: var(--muted); }
+    .images {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1px;
+      background: var(--border);
+    }
+    figure { margin: 0; padding: 10px; background: #fff; }
+    img {
+      display: block;
+      width: 100%;
+      max-height: 520px;
+      object-fit: contain;
+      background: #f1f3f5;
+    }
+    figcaption {
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+    .details { padding: 12px 14px; font-size: 13px; color: var(--muted); }
+    .scores { margin-bottom: 10px; }
+    pre {
+      white-space: pre-wrap;
+      background: #f6f8fb;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      color: var(--text);
+    }
+    @media (max-width: 760px) {
+      .images { grid-template-columns: 1fr; }
+      .sample-head { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Qwen3.5-9B LoRA Source-Candidate Error Review</h1>
+    <div class="sub">100 predictions, 80 selected review cases</div>
+  </header>
+  <main>
+    <div class="cards"><div class="card"><div class="card-label">records</div><div class="card-value">100</div></div><div class="card"><div class="card-label">accuracy</div><div class="card-value">0.580</div></div><div class="card"><div class="card-label">macro-F1</div><div class="card-value">0.556</div></div><div class="card"><div class="card-label">weighted-F1</div><div class="card-value">0.591</div></div><div class="card"><div class="card-label">errors</div><div class="card-value">42</div></div><div class="card"><div class="card-label">tie errors</div><div class="card-value">33</div></div></div>
+    <h2>Confusion Matrix</h2>
+    <table class="matrix"><thead><tr><th></th><th>pred lose</th><th>pred tie</th><th>pred win</th></tr></thead><tbody><tr><th>true lose</th><td>12</td><td>7</td><td>1</td></tr><tr><th>true tie</th><td>6</td><td>14</td><td>8</td></tr><tr><th>true win</th><td>8</td><td>12</td><td>32</td></tr></tbody></table>
+    <h2>Regression Scores</h2>
+    <table><thead><tr><th>score</th><th>MAE</th><th>Pearson</th><th>Spearman</th><th>true mean</th><th>pred mean</th><th>true std</th><th>pred std</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.826</td>
+              <td>0.413</td>
+              <td>0.374</td>
+              <td>0.394</td>
+              <td>0.228</td>
+              <td>1.177</td>
+              <td>0.994</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>0.700</td>
+              <td>0.393</td>
+              <td>0.400</td>
+              <td>3.310</td>
+              <td>3.150</td>
+              <td>1.055</td>
+              <td>0.805</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>0.090</td>
+              <td>0.779</td>
+              <td>0.853</td>
+              <td>4.740</td>
+              <td>4.710</td>
+              <td>0.522</td>
+              <td>0.454</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>0.180</td>
+              <td>0.873</td>
+              <td>0.980</td>
+              <td>4.600</td>
+              <td>4.480</td>
+              <td>0.693</td>
+              <td>0.830</td>
+            </tr>
+            </tbody></table>
+    <h2>Subset Metrics</h2>
+    <table><thead><tr><th>subset</th><th>n</th><th>accuracy</th><th>macro-F1</th><th>target</th><th>pred</th></tr></thead><tbody>
+            <tr>
+              <td>aesrecon_500</td>
+              <td>20</td>
+              <td>1.000</td>
+              <td>0.333</td>
+              <td>{&quot;win&quot;: 20}</td>
+              <td>{&quot;win&quot;: 20}</td>
+            </tr>
+            
+            <tr>
+              <td>fcdb</td>
+              <td>50</td>
+              <td>0.440</td>
+              <td>0.418</td>
+              <td>{&quot;win&quot;: 17, &quot;lose&quot;: 17, &quot;tie&quot;: 16}</td>
+              <td>{&quot;lose&quot;: 26, &quot;win&quot;: 13, &quot;tie&quot;: 11}</td>
+            </tr>
+            
+            <tr>
+              <td>reframegen_seedream_strong150</td>
+              <td>30</td>
+              <td>0.533</td>
+              <td>0.370</td>
+              <td>{&quot;tie&quot;: 12, &quot;win&quot;: 15, &quot;lose&quot;: 3}</td>
+              <td>{&quot;tie&quot;: 22, &quot;win&quot;: 8}</td>
+            </tr>
+            </tbody></table>
+    <h2>Review Cases</h2>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>1. rfj_fcdb_000134</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000134_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000134_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>-1.200</td>
+              <td>-3.200</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>2.000</td>
+              <td>-3.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>2. rfj_fcdb_000136</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000136_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000136_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>1.200</td>
+              <td>3.200</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>4.000</td>
+              <td>3.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>3. rfj_fcdb_000461</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000461_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000461_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>-1.200</td>
+              <td>-3.200</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>2.000</td>
+              <td>-3.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>4. rfj_fcdb_000463</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000463_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000463_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>-1.200</td>
+              <td>-3.200</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>2.000</td>
+              <td>-3.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>5. rfj_fcdb_000129</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000129_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000129_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>-1.200</td>
+              <td>-2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>2.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>6. rfj_fcdb_000537</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000537_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000537_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>-1.200</td>
+              <td>-2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>2.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>7. rfj_fcdb_001109</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001109_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001109_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>-1.200</td>
+              <td>-2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>2.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>8. rfj_fcdb_001402</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001402_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001402_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>-1.200</td>
+              <td>-2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>2.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>9. rfj_fcdb_003032</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003032_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003032_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>-1.200</td>
+              <td>-2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>2.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>10. rfj_fcdb_000141</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000141_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000141_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>0.400</td>
+              <td>2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>3.000</td>
+              <td>2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>11. rfj_fcdb_000164</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000164_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000164_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>0.400</td>
+              <td>2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>3.000</td>
+              <td>2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>12. rfj_fcdb_003100</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003100_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003100_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>0.400</td>
+              <td>2.400</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>3.000</td>
+              <td>2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>13. rfj_fcdb_003476</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003476_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003476_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>0.400</td>
+              <td>-1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>3.000</td>
+              <td>-2.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>14. rfj_fcdb_000563</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000563_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000563_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>1.200</td>
+              <td>1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>15. rfj_fcdb_000564</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000564_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000564_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>-1.200</td>
+              <td>-1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>16. rfj_fcdb_000580</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000580_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000580_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>-1.200</td>
+              <td>-1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>17. rfj_fcdb_000702</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000702_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000702_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>0.400</td>
+              <td>1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>18. rfj_fcdb_001115</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001115_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001115_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>1.200</td>
+              <td>1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>19. rfj_fcdb_003095</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003095_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003095_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>-1.200</td>
+              <td>-1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>20. rfj_fcdb_003477</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003477_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003477_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>1.200</td>
+              <td>1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>21. rfj_fcdb_003764</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003764_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003764_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>-1.200</td>
+              <td>-1.600</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>22. rfj_v1_reframegen_seedream_strong150_000011</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5213_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000006_seedream_strong_01.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.000</td>
+              <td>1.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, cleaner_background, more_natural_framing, bad_empty_space</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.0, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 4, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;cleaner_background&quot;, &quot;more_natural_framing&quot;, &quot;bad_empty_space&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>23. rfj_v1_reframegen_seedream_strong150_000015</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5240_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000008_seedream_strong_01.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>24. rfj_v1_reframegen_seedream_strong150_000016</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5240_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000008_seedream_strong_02.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.000</td>
+              <td>0.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>25. rfj_v1_reframegen_seedream_strong150_000022</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5098_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000002_seedream_strong_03.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>26. rfj_v1_reframegen_seedream_strong150_000028</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5240_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000008_seedream_strong_03.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>27. rfj_v1_reframegen_seedream_strong150_000043</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5391_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000015_seedream_strong_01.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_leading_lines, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_leading_lines&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>28. rfj_v1_reframegen_seedream_strong150_000044</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5391_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000015_seedream_strong_02.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.000</td>
+              <td>1.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing, bad_empty_space</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.0, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 4, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;bad_empty_space&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>29. rfj_v1_reframegen_seedream_strong150_000045</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5391_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000015_seedream_strong_03.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>30. rfj_v1_reframegen_seedream_strong150_000046</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5397_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000016_seedream_strong_01.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>31. rfj_v1_reframegen_seedream_strong150_000053</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5447_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000018_seedream_strong_02.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.000</td>
+              <td>0.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>32. rfj_v1_reframegen_seedream_strong150_000054</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5447_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000018_seedream_strong_03.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.000</td>
+              <td>0.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>2.000</td>
+              <td>4.000</td>
+              <td>2.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>2.000</td>
+              <td>3.000</td>
+              <td>1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>33. rfj_v1_reframegen_seedream_strong150_000121</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5815_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000041_seedream_strong_01.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>34. rfj_v1_reframegen_seedream_strong150_000122</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5815_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000041_seedream_strong_02.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>35. rfj_v1_reframegen_seedream_strong150_000123</strong>
+          <span>reframegen_seedream_strong150</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5815_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/reframejudge_v1/generated/reframegen_pilot_seedream_strong/images/reframegen_pilot_source_000041_seedream_strong_03.png" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>0.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, more_natural_framing, composition_not_improved, texture_artifacts</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.0, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 4, &quot;visual_naturalness&quot;: 3, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;, &quot;composition_not_improved&quot;, &quot;texture_artifacts&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>36. rfj_fcdb_000160</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000160_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000160_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>37. rfj_fcdb_000460</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000460_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000460_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>0.400</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>38. rfj_fcdb_000471</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000471_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000471_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>-1.200</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>39. rfj_fcdb_001259</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001259_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001259_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>40. rfj_fcdb_002593</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_002593_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_002593_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>0.400</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>3.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>41. rfj_fcdb_003464</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003464_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003464_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>-1.200</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>2.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample wrong">
+      <div class="sample-head">
+        <div>
+          <strong>42. rfj_fcdb_004943</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_004943_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_004943_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>43. rfj_v1_aesrecon_000008</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5133_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8240_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, better_visual_focus, more_natural_framing, bad_empty_space</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;bad_empty_space&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>44. rfj_v1_aesrecon_000023</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5228_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8335_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, better_visual_focus, more_natural_framing, bad_empty_space</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;bad_empty_space&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>45. rfj_v1_aesrecon_000027</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5276_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8383_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, cleaner_background, better_visual_focus, more_natural_framing, over_cropping</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;cleaner_background&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;over_cropping&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>46. rfj_v1_aesrecon_000037</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5343_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8450_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, better_visual_focus, more_natural_framing, composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>47. rfj_v1_aesrecon_000094</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5921_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/9028_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>48. rfj_v1_aesrecon_000108</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5073_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8180_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>49. rfj_v1_aesrecon_000172</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5278_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8385_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.000</td>
+              <td>1.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>50. rfj_v1_aesrecon_000186</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5308_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8415_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>51. rfj_v1_aesrecon_000195</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5333_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8440_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, cleaner_background, better_visual_focus, more_natural_framing, over_cropping</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;cleaner_background&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;over_cropping&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>52. rfj_v1_aesrecon_000202</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5353_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8460_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>53. rfj_v1_aesrecon_000205</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5367_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8474_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, cleaner_background, better_visual_focus, more_natural_framing, over_cropping</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;cleaner_background&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;, &quot;over_cropping&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>54. rfj_v1_aesrecon_000232</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5472_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8579_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_crop, better_leading_lines, better_visual_focus, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>55. rfj_v1_aesrecon_000269</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5602_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8709_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>56. rfj_v1_aesrecon_000319</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5737_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8844_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>57. rfj_v1_aesrecon_000390</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5937_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/9044_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>58. rfj_v1_aesrecon_000393</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5940_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/9047_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>59. rfj_v1_aesrecon_000455</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5487_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8594_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.000</td>
+              <td>1.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, better_visual_focus, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_visual_focus&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>60. rfj_v1_aesrecon_000469</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5570_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8677_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_balance, better_crop, better_leading_lines, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_balance&quot;, &quot;better_crop&quot;, &quot;better_leading_lines&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>61. rfj_v1_aesrecon_000493</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5846_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8953_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>62. rfj_v1_aesrecon_000495</strong>
+          <span>aesrecon_500</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/poor_images/5856_poor.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../../../shared/ai-camera/AesRecon_dataset/images/good_images/8963_good.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.000</td>
+              <td>1.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>4.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_subject_prominence, better_balance, better_crop, more_natural_framing</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_subject_prominence&quot;, &quot;better_balance&quot;, &quot;better_crop&quot;, &quot;more_natural_framing&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>63. rfj_fcdb_000146</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000146_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000146_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>64. rfj_fcdb_000454</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000454_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000454_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>65. rfj_fcdb_000468</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000468_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000468_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>-1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>66. rfj_fcdb_000472</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000472_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000472_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>0.400</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>3.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>67. rfj_fcdb_000523</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000523_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000523_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>-1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>68. rfj_fcdb_000534</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000534_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000534_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>69. rfj_fcdb_000579</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000579_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000579_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-0.400</td>
+              <td>0.400</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>3.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>70. rfj_fcdb_000708</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_000708_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_000708_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>-1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>71. rfj_fcdb_001105</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001105_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001105_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.200</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>72. rfj_fcdb_001153</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001153_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001153_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.200</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>73. rfj_fcdb_001158</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001158_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001158_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>74. rfj_fcdb_001187</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>tie</strong> / pred <strong>tie</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001187_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001187_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>0.400</td>
+              <td>0.400</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>3.000</td>
+              <td>3.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_not_improved</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;tie&quot;, &quot;improvement_score&quot;: 0.4, &quot;composition_gain&quot;: 3, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_not_improved&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>75. rfj_fcdb_001246</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001246_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001246_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>76. rfj_fcdb_001411</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_001411_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_001411_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>1.200</td>
+              <td>1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>4.000</td>
+              <td>4.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>77. rfj_fcdb_002175</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_002175_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_002175_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>78. rfj_fcdb_002584</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_002584_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_002584_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-1.200</td>
+              <td>-1.200</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>2.000</td>
+              <td>2.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>79. rfj_fcdb_003265</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>win</strong> / pred <strong>win</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003265_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003265_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>2.000</td>
+              <td>1.200</td>
+              <td>-0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>5.000</td>
+              <td>4.000</td>
+              <td>-1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> better_crop</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;win&quot;, &quot;improvement_score&quot;: 1.2, &quot;composition_gain&quot;: 4, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;better_crop&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+    <section class="sample correct">
+      <div class="sample-head">
+        <div>
+          <strong>80. rfj_fcdb_003266</strong>
+          <span>fcdb</span>
+        </div>
+        <div>true <strong>lose</strong> / pred <strong>lose</strong></div>
+      </div>
+      <div class="images">
+        <figure>
+          <img src="../../data/pairs/images/source/rfj_fcdb_003266_source.jpg" alt="source image">
+          <figcaption>source</figcaption>
+        </figure>
+        <figure>
+          <img src="../../data/pairs/images/edit/rfj_fcdb_003266_edit.jpg" alt="candidate image">
+          <figcaption>candidate</figcaption>
+        </figure>
+      </div>
+      <div class="details">
+        <table class="scores"><thead><tr><th>score</th><th>true</th><th>pred</th><th>delta</th></tr></thead><tbody>
+            <tr>
+              <td>improvement_score</td>
+              <td>-2.000</td>
+              <td>-1.200</td>
+              <td>0.800</td>
+            </tr>
+            
+            <tr>
+              <td>composition_gain</td>
+              <td>1.000</td>
+              <td>2.000</td>
+              <td>1.000</td>
+            </tr>
+            
+            <tr>
+              <td>content_preservation</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            
+            <tr>
+              <td>visual_naturalness</td>
+              <td>5.000</td>
+              <td>5.000</td>
+              <td>0.000</td>
+            </tr>
+            </tbody></table>
+        <p><strong>tags:</strong> composition_worse</p>
+        <p><strong>reason:</strong> </p>
+        <details>
+          <summary>raw response</summary>
+          <pre>{&quot;overall_label&quot;: &quot;lose&quot;, &quot;improvement_score&quot;: -1.2, &quot;composition_gain&quot;: 2, &quot;content_preservation&quot;: 5, &quot;visual_naturalness&quot;: 5, &quot;issue_tags&quot;: [&quot;composition_worse&quot;], &quot;reason&quot;: &quot;&quot;}
+</pre>
+        </details>
+      </div>
+    </section>
+    
+  </main>
+</body>
+</html>

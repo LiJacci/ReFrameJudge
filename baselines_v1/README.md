@@ -333,3 +333,17 @@ If a LoRA model gives useful `improvement_score` but weak `overall_label`, run s
   --output-predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_score_calibrated_test_predictions.jsonl \
   --score-key improvement_score
 ```
+
+### Source-Candidate Error Review
+
+After running the current main R2 model, generate a summary JSON and visual HTML review:
+
+```bash
+python baselines_v1/analyze_qwen35_source_candidate.py \
+  --predictions baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_test_predictions.jsonl \
+  --summary-json baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_summary.json \
+  --html-output baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_error_review.html \
+  --project-root . \
+  --max-cases 80 \
+  --title "Qwen3.5-9B LoRA Source-Candidate Error Review"
+```

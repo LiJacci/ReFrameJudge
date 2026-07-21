@@ -1,0 +1,2338 @@
+{
+  "records": 100,
+  "unique_ids": 100,
+  "error_count": 42,
+  "tie_error_count": 33,
+  "overall_label": {
+    "accuracy": 0.58,
+    "macro_precision": 0.5554228968863115,
+    "macro_recall": 0.5717948717948719,
+    "macro_f1": 0.5563091889627194,
+    "weighted_precision": 0.6169492296321565,
+    "weighted_recall": 0.58,
+    "weighted_f1": 0.5907218786164824,
+    "confusion_matrix_labels": [
+      "lose",
+      "tie",
+      "win"
+    ],
+    "confusion_matrix": [
+      [
+        12,
+        7,
+        1
+      ],
+      [
+        6,
+        14,
+        8
+      ],
+      [
+        8,
+        12,
+        32
+      ]
+    ],
+    "per_class": {
+      "lose": {
+        "precision": 0.46153846153846156,
+        "recall": 0.6,
+        "f1": 0.5217391304347826,
+        "support": 20
+      },
+      "tie": {
+        "precision": 0.42424242424242425,
+        "recall": 0.5,
+        "f1": 0.4590163934426229,
+        "support": 28
+      },
+      "win": {
+        "precision": 0.7804878048780488,
+        "recall": 0.6153846153846154,
+        "f1": 0.6881720430107527,
+        "support": 52
+      }
+    }
+  },
+  "regression": {
+    "improvement_score": {
+      "count": 100,
+      "mae": 0.826,
+      "pearson": 0.41335310583113855,
+      "spearman": 0.3740989782789811,
+      "true_mean": 0.39399999999999996,
+      "pred_mean": 0.228,
+      "true_std": 1.1769299044548065,
+      "pred_std": 0.9935874395341359,
+      "true_distribution": {
+        "1.0": 24,
+        "2.0": 16,
+        "0.0": 14,
+        "1.2": 9,
+        "-2.0": 8,
+        "-1.2": 9,
+        "0.4": 9,
+        "-0.4": 7,
+        "1.6": 1,
+        "-1.0": 3
+      },
+      "pred_distribution": {
+        "2.0": 6,
+        "1.0": 22,
+        "-1.2": 26,
+        "1.2": 13,
+        "0.4": 11,
+        "0.0": 22
+      },
+      "true_histogram": [
+        {
+          "low": -2.0,
+          "high": -1.5,
+          "count": 8
+        },
+        {
+          "low": -1.5,
+          "high": -1.0,
+          "count": 9
+        },
+        {
+          "low": -1.0,
+          "high": -0.5,
+          "count": 3
+        },
+        {
+          "low": -0.5,
+          "high": 0.0,
+          "count": 7
+        },
+        {
+          "low": 0.0,
+          "high": 0.5,
+          "count": 23
+        },
+        {
+          "low": 0.5,
+          "high": 1.0,
+          "count": 0
+        },
+        {
+          "low": 1.0,
+          "high": 1.5,
+          "count": 33
+        },
+        {
+          "low": 1.5,
+          "high": 2.0,
+          "count": 17
+        }
+      ],
+      "pred_histogram": [
+        {
+          "low": -1.2,
+          "high": -0.7999999999999999,
+          "count": 26
+        },
+        {
+          "low": -0.7999999999999999,
+          "high": -0.3999999999999999,
+          "count": 0
+        },
+        {
+          "low": -0.3999999999999999,
+          "high": 2.220446049250313e-16,
+          "count": 22
+        },
+        {
+          "low": 2.220446049250313e-16,
+          "high": 0.40000000000000013,
+          "count": 11
+        },
+        {
+          "low": 0.40000000000000013,
+          "high": 0.8,
+          "count": 0
+        },
+        {
+          "low": 0.8,
+          "high": 1.2000000000000004,
+          "count": 35
+        },
+        {
+          "low": 1.2000000000000004,
+          "high": 1.6000000000000003,
+          "count": 0
+        },
+        {
+          "low": 1.6000000000000003,
+          "high": 2.0,
+          "count": 6
+        }
+      ]
+    },
+    "composition_gain": {
+      "count": 100,
+      "mae": 0.7,
+      "pearson": 0.39269271981845427,
+      "spearman": 0.40019563018585824,
+      "true_mean": 3.31,
+      "pred_mean": 3.15,
+      "true_std": 1.0554146104730595,
+      "pred_std": 0.804673846971554,
+      "true_distribution": {
+        "4.0": 41,
+        "3.0": 30,
+        "5.0": 9,
+        "1.0": 8,
+        "2.0": 12
+      },
+      "pred_distribution": {
+        "4.0": 41,
+        "2.0": 26,
+        "3.0": 33
+      },
+      "true_histogram": [
+        {
+          "low": 1.0,
+          "high": 1.5,
+          "count": 8
+        },
+        {
+          "low": 1.5,
+          "high": 2.0,
+          "count": 0
+        },
+        {
+          "low": 2.0,
+          "high": 2.5,
+          "count": 12
+        },
+        {
+          "low": 2.5,
+          "high": 3.0,
+          "count": 0
+        },
+        {
+          "low": 3.0,
+          "high": 3.5,
+          "count": 30
+        },
+        {
+          "low": 3.5,
+          "high": 4.0,
+          "count": 0
+        },
+        {
+          "low": 4.0,
+          "high": 4.5,
+          "count": 41
+        },
+        {
+          "low": 4.5,
+          "high": 5.0,
+          "count": 9
+        }
+      ],
+      "pred_histogram": [
+        {
+          "low": 2.0,
+          "high": 2.25,
+          "count": 26
+        },
+        {
+          "low": 2.25,
+          "high": 2.5,
+          "count": 0
+        },
+        {
+          "low": 2.5,
+          "high": 2.75,
+          "count": 0
+        },
+        {
+          "low": 2.75,
+          "high": 3.0,
+          "count": 0
+        },
+        {
+          "low": 3.0,
+          "high": 3.25,
+          "count": 33
+        },
+        {
+          "low": 3.25,
+          "high": 3.5,
+          "count": 0
+        },
+        {
+          "low": 3.5,
+          "high": 3.75,
+          "count": 0
+        },
+        {
+          "low": 3.75,
+          "high": 4.0,
+          "count": 41
+        }
+      ]
+    },
+    "content_preservation": {
+      "count": 100,
+      "mae": 0.09,
+      "pearson": 0.7794710174804477,
+      "spearman": 0.852835109325337,
+      "true_mean": 4.74,
+      "pred_mean": 4.71,
+      "true_std": 0.5219195340279955,
+      "pred_std": 0.4537620521815372,
+      "true_distribution": {
+        "5.0": 77,
+        "4.0": 21,
+        "3.0": 1,
+        "2.0": 1
+      },
+      "pred_distribution": {
+        "5.0": 71,
+        "4.0": 29
+      },
+      "true_histogram": [
+        {
+          "low": 2.0,
+          "high": 2.375,
+          "count": 1
+        },
+        {
+          "low": 2.375,
+          "high": 2.75,
+          "count": 0
+        },
+        {
+          "low": 2.75,
+          "high": 3.125,
+          "count": 1
+        },
+        {
+          "low": 3.125,
+          "high": 3.5,
+          "count": 0
+        },
+        {
+          "low": 3.5,
+          "high": 3.875,
+          "count": 0
+        },
+        {
+          "low": 3.875,
+          "high": 4.25,
+          "count": 21
+        },
+        {
+          "low": 4.25,
+          "high": 4.625,
+          "count": 0
+        },
+        {
+          "low": 4.625,
+          "high": 5.0,
+          "count": 77
+        }
+      ],
+      "pred_histogram": [
+        {
+          "low": 4.0,
+          "high": 4.125,
+          "count": 29
+        },
+        {
+          "low": 4.125,
+          "high": 4.25,
+          "count": 0
+        },
+        {
+          "low": 4.25,
+          "high": 4.375,
+          "count": 0
+        },
+        {
+          "low": 4.375,
+          "high": 4.5,
+          "count": 0
+        },
+        {
+          "low": 4.5,
+          "high": 4.625,
+          "count": 0
+        },
+        {
+          "low": 4.625,
+          "high": 4.75,
+          "count": 0
+        },
+        {
+          "low": 4.75,
+          "high": 4.875,
+          "count": 0
+        },
+        {
+          "low": 4.875,
+          "high": 5.0,
+          "count": 71
+        }
+      ]
+    },
+    "visual_naturalness": {
+      "count": 100,
+      "mae": 0.18,
+      "pearson": 0.8725382451058906,
+      "spearman": 0.9802719815557353,
+      "true_mean": 4.6,
+      "pred_mean": 4.48,
+      "true_std": 0.6928203230275509,
+      "pred_std": 0.8304215796810678,
+      "true_distribution": {
+        "5.0": 70,
+        "4.0": 22,
+        "3.0": 6,
+        "2.0": 2
+      },
+      "pred_distribution": {
+        "5.0": 70,
+        "3.0": 22,
+        "4.0": 8
+      },
+      "true_histogram": [
+        {
+          "low": 2.0,
+          "high": 2.375,
+          "count": 2
+        },
+        {
+          "low": 2.375,
+          "high": 2.75,
+          "count": 0
+        },
+        {
+          "low": 2.75,
+          "high": 3.125,
+          "count": 6
+        },
+        {
+          "low": 3.125,
+          "high": 3.5,
+          "count": 0
+        },
+        {
+          "low": 3.5,
+          "high": 3.875,
+          "count": 0
+        },
+        {
+          "low": 3.875,
+          "high": 4.25,
+          "count": 22
+        },
+        {
+          "low": 4.25,
+          "high": 4.625,
+          "count": 0
+        },
+        {
+          "low": 4.625,
+          "high": 5.0,
+          "count": 70
+        }
+      ],
+      "pred_histogram": [
+        {
+          "low": 3.0,
+          "high": 3.25,
+          "count": 22
+        },
+        {
+          "low": 3.25,
+          "high": 3.5,
+          "count": 0
+        },
+        {
+          "low": 3.5,
+          "high": 3.75,
+          "count": 0
+        },
+        {
+          "low": 3.75,
+          "high": 4.0,
+          "count": 0
+        },
+        {
+          "low": 4.0,
+          "high": 4.25,
+          "count": 8
+        },
+        {
+          "low": 4.25,
+          "high": 4.5,
+          "count": 0
+        },
+        {
+          "low": 4.5,
+          "high": 4.75,
+          "count": 0
+        },
+        {
+          "low": 4.75,
+          "high": 5.0,
+          "count": 70
+        }
+      ]
+    }
+  },
+  "by_subset": {
+    "aesrecon_500": {
+      "count": 20,
+      "overall_label": {
+        "accuracy": 1.0,
+        "macro_precision": 0.3333333333333333,
+        "macro_recall": 0.3333333333333333,
+        "macro_f1": 0.3333333333333333,
+        "weighted_precision": 1.0,
+        "weighted_recall": 1.0,
+        "weighted_f1": 1.0,
+        "confusion_matrix_labels": [
+          "lose",
+          "tie",
+          "win"
+        ],
+        "confusion_matrix": [
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            0
+          ],
+          [
+            0,
+            0,
+            20
+          ]
+        ],
+        "per_class": {
+          "lose": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "tie": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 0
+          },
+          "win": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1": 1.0,
+            "support": 20
+          }
+        }
+      },
+      "regression": {
+        "improvement_score": {
+          "count": 20,
+          "mae": 0.4,
+          "pearson": 0.3748789971250485,
+          "spearman": 0.37796447300922725,
+          "true_mean": 1.3,
+          "pred_mean": 1.3,
+          "true_std": 0.6403124237432849,
+          "pred_std": 0.45825756949558394,
+          "true_distribution": {
+            "1.0": 10,
+            "2.0": 8,
+            "0.0": 2
+          },
+          "pred_distribution": {
+            "2.0": 6,
+            "1.0": 14
+          },
+          "true_histogram": [
+            {
+              "low": 0.0,
+              "high": 0.25,
+              "count": 2
+            },
+            {
+              "low": 0.25,
+              "high": 0.5,
+              "count": 0
+            },
+            {
+              "low": 0.5,
+              "high": 0.75,
+              "count": 0
+            },
+            {
+              "low": 0.75,
+              "high": 1.0,
+              "count": 0
+            },
+            {
+              "low": 1.0,
+              "high": 1.25,
+              "count": 10
+            },
+            {
+              "low": 1.25,
+              "high": 1.5,
+              "count": 0
+            },
+            {
+              "low": 1.5,
+              "high": 1.75,
+              "count": 0
+            },
+            {
+              "low": 1.75,
+              "high": 2.0,
+              "count": 8
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 1.0,
+              "high": 1.125,
+              "count": 14
+            },
+            {
+              "low": 1.125,
+              "high": 1.25,
+              "count": 0
+            },
+            {
+              "low": 1.25,
+              "high": 1.375,
+              "count": 0
+            },
+            {
+              "low": 1.375,
+              "high": 1.5,
+              "count": 0
+            },
+            {
+              "low": 1.5,
+              "high": 1.625,
+              "count": 0
+            },
+            {
+              "low": 1.625,
+              "high": 1.75,
+              "count": 0
+            },
+            {
+              "low": 1.75,
+              "high": 1.875,
+              "count": 0
+            },
+            {
+              "low": 1.875,
+              "high": 2.0,
+              "count": 6
+            }
+          ]
+        },
+        "composition_gain": {
+          "count": 20,
+          "mae": 0.1,
+          "pearson": null,
+          "spearman": null,
+          "true_mean": 3.9,
+          "pred_mean": 4.0,
+          "true_std": 0.3,
+          "pred_std": 0.0,
+          "true_distribution": {
+            "4.0": 18,
+            "3.0": 2
+          },
+          "pred_distribution": {
+            "4.0": 20
+          },
+          "true_histogram": [
+            {
+              "low": 3.0,
+              "high": 3.125,
+              "count": 2
+            },
+            {
+              "low": 3.125,
+              "high": 3.25,
+              "count": 0
+            },
+            {
+              "low": 3.25,
+              "high": 3.375,
+              "count": 0
+            },
+            {
+              "low": 3.375,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.625,
+              "count": 0
+            },
+            {
+              "low": 3.625,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.0,
+              "count": 18
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 3.5,
+              "high": 3.625,
+              "count": 0
+            },
+            {
+              "low": 3.625,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.0,
+              "count": 0
+            },
+            {
+              "low": 4.0,
+              "high": 4.125,
+              "count": 20
+            },
+            {
+              "low": 4.125,
+              "high": 4.25,
+              "count": 0
+            },
+            {
+              "low": 4.25,
+              "high": 4.375,
+              "count": 0
+            },
+            {
+              "low": 4.375,
+              "high": 4.5,
+              "count": 0
+            }
+          ]
+        },
+        "content_preservation": {
+          "count": 20,
+          "mae": 0.0,
+          "pearson": null,
+          "spearman": null,
+          "true_mean": 5.0,
+          "pred_mean": 5.0,
+          "true_std": 0.0,
+          "pred_std": 0.0,
+          "true_distribution": {
+            "5.0": 20
+          },
+          "pred_distribution": {
+            "5.0": 20
+          },
+          "true_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 20
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 20
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ]
+        },
+        "visual_naturalness": {
+          "count": 20,
+          "mae": 0.0,
+          "pearson": null,
+          "spearman": null,
+          "true_mean": 5.0,
+          "pred_mean": 5.0,
+          "true_std": 0.0,
+          "pred_std": 0.0,
+          "true_distribution": {
+            "5.0": 20
+          },
+          "pred_distribution": {
+            "5.0": 20
+          },
+          "true_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 20
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 20
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ]
+        }
+      },
+      "prediction_distribution": {
+        "win": 20
+      },
+      "target_distribution": {
+        "win": 20
+      }
+    },
+    "fcdb": {
+      "count": 50,
+      "overall_label": {
+        "accuracy": 0.44,
+        "macro_precision": 0.42890442890442887,
+        "macro_recall": 0.4362745098039216,
+        "macro_f1": 0.4181452770600058,
+        "weighted_precision": 0.4302097902097903,
+        "weighted_recall": 0.44,
+        "weighted_f1": 0.42058225667528,
+        "confusion_matrix_labels": [
+          "lose",
+          "tie",
+          "win"
+        ],
+        "confusion_matrix": [
+          [
+            12,
+            4,
+            1
+          ],
+          [
+            6,
+            4,
+            6
+          ],
+          [
+            8,
+            3,
+            6
+          ]
+        ],
+        "per_class": {
+          "lose": {
+            "precision": 0.46153846153846156,
+            "recall": 0.7058823529411765,
+            "f1": 0.558139534883721,
+            "support": 17
+          },
+          "tie": {
+            "precision": 0.36363636363636365,
+            "recall": 0.25,
+            "f1": 0.2962962962962963,
+            "support": 16
+          },
+          "win": {
+            "precision": 0.46153846153846156,
+            "recall": 0.35294117647058826,
+            "f1": 0.4000000000000001,
+            "support": 17
+          }
+        }
+      },
+      "regression": {
+        "improvement_score": {
+          "count": 50,
+          "mae": 1.2,
+          "pearson": 0.2081470780863949,
+          "spearman": 0.21470010755113944,
+          "true_mean": 0.016000000000000004,
+          "pred_mean": -0.22400000000000003,
+          "true_std": 1.3599058790960499,
+          "pred_std": 1.0527221855741429,
+          "true_distribution": {
+            "1.2": 9,
+            "2.0": 8,
+            "-2.0": 8,
+            "-1.2": 9,
+            "0.4": 9,
+            "-0.4": 7
+          },
+          "pred_distribution": {
+            "-1.2": 26,
+            "1.2": 13,
+            "0.4": 11
+          },
+          "true_histogram": [
+            {
+              "low": -2.0,
+              "high": -1.5,
+              "count": 8
+            },
+            {
+              "low": -1.5,
+              "high": -1.0,
+              "count": 9
+            },
+            {
+              "low": -1.0,
+              "high": -0.5,
+              "count": 0
+            },
+            {
+              "low": -0.5,
+              "high": 0.0,
+              "count": 7
+            },
+            {
+              "low": 0.0,
+              "high": 0.5,
+              "count": 9
+            },
+            {
+              "low": 0.5,
+              "high": 1.0,
+              "count": 0
+            },
+            {
+              "low": 1.0,
+              "high": 1.5,
+              "count": 9
+            },
+            {
+              "low": 1.5,
+              "high": 2.0,
+              "count": 8
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": -1.2,
+              "high": -0.8999999999999999,
+              "count": 26
+            },
+            {
+              "low": -0.8999999999999999,
+              "high": -0.6,
+              "count": 0
+            },
+            {
+              "low": -0.6,
+              "high": -0.30000000000000004,
+              "count": 0
+            },
+            {
+              "low": -0.30000000000000004,
+              "high": 0.0,
+              "count": 0
+            },
+            {
+              "low": 0.0,
+              "high": 0.30000000000000004,
+              "count": 0
+            },
+            {
+              "low": 0.30000000000000004,
+              "high": 0.5999999999999999,
+              "count": 11
+            },
+            {
+              "low": 0.5999999999999999,
+              "high": 0.9000000000000001,
+              "count": 0
+            },
+            {
+              "low": 0.9000000000000001,
+              "high": 1.2,
+              "count": 13
+            }
+          ]
+        },
+        "composition_gain": {
+          "count": 50,
+          "mae": 1.06,
+          "pearson": 0.2405411974106959,
+          "spearman": 0.23132582368268176,
+          "true_mean": 3.0,
+          "pred_mean": 2.74,
+          "true_std": 1.2806248474865698,
+          "pred_std": 0.8440379138403677,
+          "true_distribution": {
+            "4.0": 9,
+            "5.0": 8,
+            "1.0": 8,
+            "2.0": 9,
+            "3.0": 16
+          },
+          "pred_distribution": {
+            "2.0": 26,
+            "4.0": 13,
+            "3.0": 11
+          },
+          "true_histogram": [
+            {
+              "low": 1.0,
+              "high": 1.5,
+              "count": 8
+            },
+            {
+              "low": 1.5,
+              "high": 2.0,
+              "count": 0
+            },
+            {
+              "low": 2.0,
+              "high": 2.5,
+              "count": 9
+            },
+            {
+              "low": 2.5,
+              "high": 3.0,
+              "count": 0
+            },
+            {
+              "low": 3.0,
+              "high": 3.5,
+              "count": 16
+            },
+            {
+              "low": 3.5,
+              "high": 4.0,
+              "count": 0
+            },
+            {
+              "low": 4.0,
+              "high": 4.5,
+              "count": 9
+            },
+            {
+              "low": 4.5,
+              "high": 5.0,
+              "count": 8
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 2.0,
+              "high": 2.25,
+              "count": 26
+            },
+            {
+              "low": 2.25,
+              "high": 2.5,
+              "count": 0
+            },
+            {
+              "low": 2.5,
+              "high": 2.75,
+              "count": 0
+            },
+            {
+              "low": 2.75,
+              "high": 3.0,
+              "count": 0
+            },
+            {
+              "low": 3.0,
+              "high": 3.25,
+              "count": 11
+            },
+            {
+              "low": 3.25,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 4.0,
+              "count": 13
+            }
+          ]
+        },
+        "content_preservation": {
+          "count": 50,
+          "mae": 0.0,
+          "pearson": null,
+          "spearman": null,
+          "true_mean": 5.0,
+          "pred_mean": 5.0,
+          "true_std": 0.0,
+          "pred_std": 0.0,
+          "true_distribution": {
+            "5.0": 50
+          },
+          "pred_distribution": {
+            "5.0": 50
+          },
+          "true_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 50
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 50
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ]
+        },
+        "visual_naturalness": {
+          "count": 50,
+          "mae": 0.0,
+          "pearson": null,
+          "spearman": null,
+          "true_mean": 5.0,
+          "pred_mean": 5.0,
+          "true_std": 0.0,
+          "pred_std": 0.0,
+          "true_distribution": {
+            "5.0": 50
+          },
+          "pred_distribution": {
+            "5.0": 50
+          },
+          "true_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 50
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 0
+            },
+            {
+              "low": 5.0,
+              "high": 5.125,
+              "count": 50
+            },
+            {
+              "low": 5.125,
+              "high": 5.25,
+              "count": 0
+            },
+            {
+              "low": 5.25,
+              "high": 5.375,
+              "count": 0
+            },
+            {
+              "low": 5.375,
+              "high": 5.5,
+              "count": 0
+            }
+          ]
+        }
+      },
+      "prediction_distribution": {
+        "lose": 26,
+        "win": 13,
+        "tie": 11
+      },
+      "target_distribution": {
+        "win": 17,
+        "lose": 17,
+        "tie": 16
+      }
+    },
+    "reframegen_seedream_strong150": {
+      "count": 30,
+      "overall_label": {
+        "accuracy": 0.5333333333333333,
+        "macro_precision": 0.40151515151515155,
+        "macro_recall": 0.41111111111111115,
+        "macro_f1": 0.36999147485080996,
+        "weighted_precision": 0.5568181818181818,
+        "weighted_recall": 0.5333333333333333,
+        "weighted_f1": 0.4961636828644502,
+        "confusion_matrix_labels": [
+          "lose",
+          "tie",
+          "win"
+        ],
+        "confusion_matrix": [
+          [
+            0,
+            3,
+            0
+          ],
+          [
+            0,
+            10,
+            2
+          ],
+          [
+            0,
+            9,
+            6
+          ]
+        ],
+        "per_class": {
+          "lose": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0,
+            "support": 3
+          },
+          "tie": {
+            "precision": 0.45454545454545453,
+            "recall": 0.8333333333333334,
+            "f1": 0.5882352941176471,
+            "support": 12
+          },
+          "win": {
+            "precision": 0.75,
+            "recall": 0.4,
+            "f1": 0.5217391304347827,
+            "support": 15
+          }
+        }
+      },
+      "regression": {
+        "improvement_score": {
+          "count": 30,
+          "mae": 0.48666666666666664,
+          "pearson": 0.3541341047413952,
+          "spearman": 0.35754847096709713,
+          "true_mean": 0.42,
+          "pred_mean": 0.26666666666666666,
+          "true_std": 0.6896375859826667,
+          "pred_std": 0.44221663871405326,
+          "true_distribution": {
+            "0.0": 12,
+            "1.0": 14,
+            "1.6": 1,
+            "-1.0": 3
+          },
+          "pred_distribution": {
+            "0.0": 22,
+            "1.0": 8
+          },
+          "true_histogram": [
+            {
+              "low": -1.0,
+              "high": -0.675,
+              "count": 3
+            },
+            {
+              "low": -0.675,
+              "high": -0.35,
+              "count": 0
+            },
+            {
+              "low": -0.35,
+              "high": -0.02499999999999991,
+              "count": 0
+            },
+            {
+              "low": -0.02499999999999991,
+              "high": 0.30000000000000004,
+              "count": 12
+            },
+            {
+              "low": 0.30000000000000004,
+              "high": 0.625,
+              "count": 0
+            },
+            {
+              "low": 0.625,
+              "high": 0.9500000000000002,
+              "count": 0
+            },
+            {
+              "low": 0.9500000000000002,
+              "high": 1.275,
+              "count": 14
+            },
+            {
+              "low": 1.275,
+              "high": 1.6,
+              "count": 1
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 0.0,
+              "high": 0.125,
+              "count": 22
+            },
+            {
+              "low": 0.125,
+              "high": 0.25,
+              "count": 0
+            },
+            {
+              "low": 0.25,
+              "high": 0.375,
+              "count": 0
+            },
+            {
+              "low": 0.375,
+              "high": 0.5,
+              "count": 0
+            },
+            {
+              "low": 0.5,
+              "high": 0.625,
+              "count": 0
+            },
+            {
+              "low": 0.625,
+              "high": 0.75,
+              "count": 0
+            },
+            {
+              "low": 0.75,
+              "high": 0.875,
+              "count": 0
+            },
+            {
+              "low": 0.875,
+              "high": 1.0,
+              "count": 8
+            }
+          ]
+        },
+        "composition_gain": {
+          "count": 30,
+          "mae": 0.5,
+          "pearson": 0.3721337579685017,
+          "spearman": 0.35754847096709713,
+          "true_mean": 3.433333333333333,
+          "pred_mean": 3.2666666666666666,
+          "true_std": 0.7156970184527962,
+          "pred_std": 0.44221663871405326,
+          "true_distribution": {
+            "3.0": 12,
+            "4.0": 14,
+            "5.0": 1,
+            "2.0": 3
+          },
+          "pred_distribution": {
+            "3.0": 22,
+            "4.0": 8
+          },
+          "true_histogram": [
+            {
+              "low": 2.0,
+              "high": 2.375,
+              "count": 3
+            },
+            {
+              "low": 2.375,
+              "high": 2.75,
+              "count": 0
+            },
+            {
+              "low": 2.75,
+              "high": 3.125,
+              "count": 12
+            },
+            {
+              "low": 3.125,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.25,
+              "count": 14
+            },
+            {
+              "low": 4.25,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 5.0,
+              "count": 1
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 3.0,
+              "high": 3.125,
+              "count": 22
+            },
+            {
+              "low": 3.125,
+              "high": 3.25,
+              "count": 0
+            },
+            {
+              "low": 3.25,
+              "high": 3.375,
+              "count": 0
+            },
+            {
+              "low": 3.375,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.625,
+              "count": 0
+            },
+            {
+              "low": 3.625,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.0,
+              "count": 8
+            }
+          ]
+        },
+        "content_preservation": {
+          "count": 30,
+          "mae": 0.3,
+          "pearson": 0.26031256272556397,
+          "spearman": 0.307220618338423,
+          "true_mean": 4.133333333333334,
+          "pred_mean": 4.033333333333333,
+          "true_std": 0.6182412330330468,
+          "pred_std": 0.1795054935711501,
+          "true_distribution": {
+            "4.0": 21,
+            "5.0": 7,
+            "3.0": 1,
+            "2.0": 1
+          },
+          "pred_distribution": {
+            "4.0": 29,
+            "5.0": 1
+          },
+          "true_histogram": [
+            {
+              "low": 2.0,
+              "high": 2.375,
+              "count": 1
+            },
+            {
+              "low": 2.375,
+              "high": 2.75,
+              "count": 0
+            },
+            {
+              "low": 2.75,
+              "high": 3.125,
+              "count": 1
+            },
+            {
+              "low": 3.125,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.25,
+              "count": 21
+            },
+            {
+              "low": 4.25,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 5.0,
+              "count": 7
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 4.0,
+              "high": 4.125,
+              "count": 29
+            },
+            {
+              "low": 4.125,
+              "high": 4.25,
+              "count": 0
+            },
+            {
+              "low": 4.25,
+              "high": 4.375,
+              "count": 0
+            },
+            {
+              "low": 4.375,
+              "high": 4.5,
+              "count": 0
+            },
+            {
+              "low": 4.5,
+              "high": 4.625,
+              "count": 0
+            },
+            {
+              "low": 4.625,
+              "high": 4.75,
+              "count": 0
+            },
+            {
+              "low": 4.75,
+              "high": 4.875,
+              "count": 0
+            },
+            {
+              "low": 4.875,
+              "high": 5.0,
+              "count": 1
+            }
+          ]
+        },
+        "visual_naturalness": {
+          "count": 30,
+          "mae": 0.6,
+          "pearson": 0.21068745701976307,
+          "spearman": 0.20271092910650076,
+          "true_mean": 3.6666666666666665,
+          "pred_mean": 3.2666666666666666,
+          "true_std": 0.5962847939999438,
+          "pred_std": 0.44221663871405326,
+          "true_distribution": {
+            "4.0": 22,
+            "3.0": 6,
+            "2.0": 2
+          },
+          "pred_distribution": {
+            "3.0": 22,
+            "4.0": 8
+          },
+          "true_histogram": [
+            {
+              "low": 2.0,
+              "high": 2.25,
+              "count": 2
+            },
+            {
+              "low": 2.25,
+              "high": 2.5,
+              "count": 0
+            },
+            {
+              "low": 2.5,
+              "high": 2.75,
+              "count": 0
+            },
+            {
+              "low": 2.75,
+              "high": 3.0,
+              "count": 0
+            },
+            {
+              "low": 3.0,
+              "high": 3.25,
+              "count": 6
+            },
+            {
+              "low": 3.25,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 4.0,
+              "count": 22
+            }
+          ],
+          "pred_histogram": [
+            {
+              "low": 3.0,
+              "high": 3.125,
+              "count": 22
+            },
+            {
+              "low": 3.125,
+              "high": 3.25,
+              "count": 0
+            },
+            {
+              "low": 3.25,
+              "high": 3.375,
+              "count": 0
+            },
+            {
+              "low": 3.375,
+              "high": 3.5,
+              "count": 0
+            },
+            {
+              "low": 3.5,
+              "high": 3.625,
+              "count": 0
+            },
+            {
+              "low": 3.625,
+              "high": 3.75,
+              "count": 0
+            },
+            {
+              "low": 3.75,
+              "high": 3.875,
+              "count": 0
+            },
+            {
+              "low": 3.875,
+              "high": 4.0,
+              "count": 8
+            }
+          ]
+        }
+      },
+      "prediction_distribution": {
+        "tie": 22,
+        "win": 8
+      },
+      "target_distribution": {
+        "tie": 12,
+        "win": 15,
+        "lose": 3
+      }
+    }
+  },
+  "prediction_distribution": {
+    "win": 41,
+    "lose": 26,
+    "tie": 33
+  },
+  "target_distribution": {
+    "win": 52,
+    "lose": 20,
+    "tie": 28
+  },
+  "confusion_pairs": {
+    "win->win": 32,
+    "win->lose": 8,
+    "lose->win": 1,
+    "lose->tie": 7,
+    "lose->lose": 12,
+    "tie->win": 8,
+    "win->tie": 12,
+    "tie->lose": 6,
+    "tie->tie": 14
+  },
+  "top_wrong_cases": [
+    {
+      "id": "rfj_fcdb_000134",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 29.4,
+      "true_scores": {
+        "improvement_score": 2,
+        "composition_gain": 5,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000136",
+      "subset": "fcdb",
+      "true_label": "lose",
+      "pred_label": "win",
+      "wrongness_score": 29.4,
+      "true_scores": {
+        "improvement_score": -2,
+        "composition_gain": 1,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000461",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 29.4,
+      "true_scores": {
+        "improvement_score": 2,
+        "composition_gain": 5,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000463",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 29.4,
+      "true_scores": {
+        "improvement_score": 2,
+        "composition_gain": 5,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000129",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 26.8,
+      "true_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000537",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 26.8,
+      "true_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_001109",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 26.8,
+      "true_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_001402",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 26.8,
+      "true_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_003032",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "lose",
+      "wrongness_score": 26.8,
+      "true_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000141",
+      "subset": "fcdb",
+      "true_label": "lose",
+      "pred_label": "tie",
+      "wrongness_score": 16.8,
+      "true_scores": {
+        "improvement_score": -2,
+        "composition_gain": 1,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000164",
+      "subset": "fcdb",
+      "true_label": "lose",
+      "pred_label": "tie",
+      "wrongness_score": 16.8,
+      "true_scores": {
+        "improvement_score": -2,
+        "composition_gain": 1,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_003100",
+      "subset": "fcdb",
+      "true_label": "lose",
+      "pred_label": "tie",
+      "wrongness_score": 16.8,
+      "true_scores": {
+        "improvement_score": -2,
+        "composition_gain": 1,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_003476",
+      "subset": "fcdb",
+      "true_label": "win",
+      "pred_label": "tie",
+      "wrongness_score": 15.2,
+      "true_scores": {
+        "improvement_score": 2,
+        "composition_gain": 5,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000563",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "win",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": -0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000564",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "lose",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000580",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "lose",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_000702",
+      "subset": "fcdb",
+      "true_label": "lose",
+      "pred_label": "tie",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_001115",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "win",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": -0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_003095",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "lose",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": 0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": -1.2,
+        "composition_gain": 2,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    },
+    {
+      "id": "rfj_fcdb_003477",
+      "subset": "fcdb",
+      "true_label": "tie",
+      "pred_label": "win",
+      "wrongness_score": 14.2,
+      "true_scores": {
+        "improvement_score": -0.4,
+        "composition_gain": 3,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "pred_scores": {
+        "improvement_score": 1.2,
+        "composition_gain": 4,
+        "content_preservation": 5,
+        "visual_naturalness": 5
+      },
+      "reason": ""
+    }
+  ]
+}
