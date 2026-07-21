@@ -100,10 +100,21 @@ python baselines_v1/qwen35_local_judge.py \
   --temperature 0
 ```
 
-Smoke test:
+### Qwen3.5-4B No-LoRA source/candidate mode
 
 ```bash
-  --max-samples 10 --continue-on-error
+python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-4B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --judge-mode source_candidate \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_4b_nolora_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_nolora_source_candidate_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
 ```
 
 ### Qwen3.5-9B No-LoRA Blind A/B
@@ -122,6 +133,25 @@ python baselines_v1/qwen35_local_judge.py \
   --max-new-tokens 512 \
   --temperature 0
 ```
+
+### Qwen3.5-9B No-LoRA source/candidate mode
+
+```bash
+python baselines_v1/qwen35_local_judge.py \
+  --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
+  --project-root . \
+  --model-name Qwen/Qwen3.5-9B \
+  --hf-cache-dir ./data/cache/huggingface \
+  --judge-mode source_candidate \
+  --shuffle-order \
+  --output-json baselines_v1/outputs/reframejudge_v1_qwen35_9b_nolora_source_candidate_test.json \
+  --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_nolora_source_candidate_test_predictions.jsonl \
+  --load-in-4bit \
+  --max-new-tokens 512 \
+  --temperature 0
+```
+
+
 
 ### Qwen3.5-4B LoRA Training
 

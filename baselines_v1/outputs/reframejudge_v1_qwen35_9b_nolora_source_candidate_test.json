@@ -1,0 +1,344 @@
+{
+  "model": "qwen35_local_judge",
+  "model_name": "Qwen/Qwen3.5-9B",
+  "adapter": null,
+  "judge_mode": "source_candidate",
+  "shuffle_order": true,
+  "input_jsonl": "data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl",
+  "records": 100,
+  "max_samples": null,
+  "temperature": 0.0,
+  "max_new_tokens": 512,
+  "load_in_4bit": true,
+  "metrics": {
+    "overall_label": {
+      "accuracy": 0.5,
+      "macro_precision": 0.5075880758807588,
+      "macro_recall": 0.48205128205128206,
+      "macro_f1": 0.4564102564102564,
+      "weighted_precision": 0.5865040650406504,
+      "weighted_recall": 0.5,
+      "weighted_f1": 0.5138461538461538,
+      "confusion_matrix_labels": [
+        "lose",
+        "tie",
+        "win"
+      ],
+      "confusion_matrix": [
+        [
+          12,
+          5,
+          3
+        ],
+        [
+          14,
+          7,
+          7
+        ],
+        [
+          19,
+          2,
+          31
+        ]
+      ],
+      "per_class": {
+        "lose": {
+          "precision": 0.26666666666666666,
+          "recall": 0.6,
+          "f1": 0.36923076923076925,
+          "support": 20
+        },
+        "tie": {
+          "precision": 0.5,
+          "recall": 0.25,
+          "f1": 0.3333333333333333,
+          "support": 28
+        },
+        "win": {
+          "precision": 0.7560975609756098,
+          "recall": 0.5961538461538461,
+          "f1": 0.6666666666666666,
+          "support": 52
+        }
+      }
+    },
+    "regression": {
+      "improvement_score": {
+        "count": 100,
+        "mae": 1.075,
+        "pearson": 0.3357131175575412,
+        "spearman": 0.30607786121485175
+      },
+      "composition_gain": {
+        "count": 100,
+        "mae": 1.02,
+        "pearson": 0.28354552092432905,
+        "spearman": 0.3066754215069153
+      },
+      "content_preservation": {
+        "count": 100,
+        "mae": 0.31,
+        "pearson": -0.08420459166704718,
+        "spearman": -0.09584399057954511
+      },
+      "visual_naturalness": {
+        "count": 100,
+        "mae": 0.81,
+        "pearson": 0.5817227025562733,
+        "spearman": 0.610201147270872
+      }
+    },
+    "by_subset": {
+      "aesrecon_500": {
+        "count": 20,
+        "overall_label": {
+          "accuracy": 0.85,
+          "macro_precision": 0.3333333333333333,
+          "macro_recall": 0.2833333333333333,
+          "macro_f1": 0.30630630630630634,
+          "weighted_precision": 1.0,
+          "weighted_recall": 0.85,
+          "weighted_f1": 0.918918918918919,
+          "confusion_matrix_labels": [
+            "lose",
+            "tie",
+            "win"
+          ],
+          "confusion_matrix": [
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              0,
+              0,
+              0
+            ],
+            [
+              3,
+              0,
+              17
+            ]
+          ],
+          "per_class": {
+            "lose": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            "tie": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 0
+            },
+            "win": {
+              "precision": 1.0,
+              "recall": 0.85,
+              "f1": 0.918918918918919,
+              "support": 20
+            }
+          }
+        },
+        "regression": {
+          "improvement_score": {
+            "count": 20,
+            "mae": 0.7,
+            "pearson": 0.04679367298727902,
+            "spearman": 0.2970080527589392
+          },
+          "composition_gain": {
+            "count": 20,
+            "mae": 0.45,
+            "pearson": -0.1367824224107948,
+            "spearman": -0.13961796943056518
+          },
+          "content_preservation": {
+            "count": 20,
+            "mae": 0.0,
+            "pearson": null,
+            "spearman": null
+          },
+          "visual_naturalness": {
+            "count": 20,
+            "mae": 0.65,
+            "pearson": null,
+            "spearman": null
+          }
+        }
+      },
+      "fcdb": {
+        "count": 50,
+        "overall_label": {
+          "accuracy": 0.46,
+          "macro_precision": 0.46507936507936504,
+          "macro_recall": 0.45955882352941174,
+          "macro_f1": 0.4592836257309942,
+          "weighted_precision": 0.46438095238095234,
+          "weighted_recall": 0.46,
+          "weighted_f1": 0.4591359649122807,
+          "confusion_matrix_labels": [
+            "lose",
+            "tie",
+            "win"
+          ],
+          "confusion_matrix": [
+            [
+              9,
+              5,
+              3
+            ],
+            [
+              4,
+              7,
+              5
+            ],
+            [
+              8,
+              2,
+              7
+            ]
+          ],
+          "per_class": {
+            "lose": {
+              "precision": 0.42857142857142855,
+              "recall": 0.5294117647058824,
+              "f1": 0.47368421052631576,
+              "support": 17
+            },
+            "tie": {
+              "precision": 0.5,
+              "recall": 0.4375,
+              "f1": 0.4666666666666667,
+              "support": 16
+            },
+            "win": {
+              "precision": 0.4666666666666667,
+              "recall": 0.4117647058823529,
+              "f1": 0.4375,
+              "support": 17
+            }
+          }
+        },
+        "regression": {
+          "improvement_score": {
+            "count": 50,
+            "mae": 1.2220000000000002,
+            "pearson": 0.2152949728620379,
+            "spearman": 0.1917217411478496
+          },
+          "composition_gain": {
+            "count": 50,
+            "mae": 1.1,
+            "pearson": 0.21796745444606397,
+            "spearman": 0.19816666393159946
+          },
+          "content_preservation": {
+            "count": 50,
+            "mae": 0.1,
+            "pearson": null,
+            "spearman": null
+          },
+          "visual_naturalness": {
+            "count": 50,
+            "mae": 0.5,
+            "pearson": null,
+            "spearman": null
+          }
+        }
+      },
+      "reframegen_seedream_strong150": {
+        "count": 30,
+        "overall_label": {
+          "accuracy": 0.3333333333333333,
+          "macro_precision": 0.3068783068783069,
+          "macro_recall": 0.48888888888888893,
+          "macro_f1": 0.2777777777777778,
+          "weighted_precision": 0.4031746031746032,
+          "weighted_recall": 0.3333333333333333,
+          "weighted_f1": 0.31666666666666665,
+          "confusion_matrix_labels": [
+            "lose",
+            "tie",
+            "win"
+          ],
+          "confusion_matrix": [
+            [
+              3,
+              0,
+              0
+            ],
+            [
+              10,
+              0,
+              2
+            ],
+            [
+              8,
+              0,
+              7
+            ]
+          ],
+          "per_class": {
+            "lose": {
+              "precision": 0.14285714285714285,
+              "recall": 1.0,
+              "f1": 0.25,
+              "support": 3
+            },
+            "tie": {
+              "precision": 0.0,
+              "recall": 0.0,
+              "f1": 0.0,
+              "support": 12
+            },
+            "win": {
+              "precision": 0.7777777777777778,
+              "recall": 0.4666666666666667,
+              "f1": 0.5833333333333334,
+              "support": 15
+            }
+          }
+        },
+        "regression": {
+          "improvement_score": {
+            "count": 30,
+            "mae": 1.0799999999999998,
+            "pearson": 0.4076414931926137,
+            "spearman": 0.41607406748033415
+          },
+          "composition_gain": {
+            "count": 30,
+            "mae": 1.2666666666666666,
+            "pearson": 0.4667649576495767,
+            "spearman": 0.4738377593884031
+          },
+          "content_preservation": {
+            "count": 30,
+            "mae": 0.8666666666666667,
+            "pearson": null,
+            "spearman": null
+          },
+          "visual_naturalness": {
+            "count": 30,
+            "mae": 1.4333333333333333,
+            "pearson": 0.14892565342614114,
+            "spearman": 0.12076747171036227
+          }
+        }
+      }
+    },
+    "prediction_distribution": {
+      "win": 41,
+      "lose": 45,
+      "tie": 14
+    },
+    "target_distribution": {
+      "win": 52,
+      "lose": 20,
+      "tie": 28
+    }
+  }
+}
