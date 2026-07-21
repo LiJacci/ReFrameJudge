@@ -61,6 +61,7 @@ Rules:
 - improvement_score must be an integer or float from -2 to 2.
 - composition_gain, content_preservation, and visual_naturalness must be integers from 1 to 5.
 - Keep reason concise.
+- Do NOT output any analysis text, markdown blocks, or explanations before or after the JSON.
 """
 
 
@@ -73,7 +74,7 @@ Judge which candidate is better overall. Consider:
 - Content coverage: whether important subject and scene information are preserved.
 - Visual naturalness: artifacts, lighting, perspective, texture, realism, and awkward generated details.
 
-Return only one valid JSON object:
+Return only one valid JSON object. Do NOT output any analysis text, markdown blocks, or explanations before or after the JSON:
 {
   "choice": "A|B|tie",
   "preference_score": 0,
@@ -91,6 +92,7 @@ Rules:
 - preference_score must be from -2 to 2, where negative favors A, positive favors B, and 0 means tie.
 - composition_gain, content_preservation, and visual_naturalness must be integers from 1 to 5.
 - Keep reason concise.
+- Do NOT output any analysis text, markdown blocks, or explanations before or after the JSON.
 """
 
 
@@ -118,10 +120,7 @@ def resolve_image_path(project_root, image_path):
 
 
 def image_uri(path):
-    mime_type, _ = mimetypes.guess_type(path)
-    if mime_type is None:
-        mime_type = "image/jpeg"
-    return path.as_uri()
+    return str(path)
 
 
 def load_prompt(path, judge_mode):
@@ -139,9 +138,30 @@ def extract_json(text):
     except json.JSONDecodeError:
         pass
     match = re.search(r"\{.*\}", text, re.S)
-    if not match:
-        raise ValueError(f"No JSON object found in response: {text[:500]}")
-    return json.loads(match.group(0))
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    # Fallback: try to infer choice/label from free text
+    lowered = text.lower()
+    choice_match = re.search(r'["\']?choice["\']?\s*[:=]\s*["\']?([abtie]+)["\']?', text, re.I)
+    if choice_match:
+        return {"choice": choice_match.group(1).upper()}
+    if re.search(r'\bchoose\s+A\b|\bpick\s+A\b|\bis\s+A\b|\bwinner\s+is\s+A\b', text, re.I):
+        return {"choice": "A"}
+    if re.search(r'\bchoose\s+B\b|\bpick\s+B\b|\bis\s+B\b|\bwinner\s+is\s+B\b', text, re.I):
+        return {"choice": "B"}
+    if "tie" in lowered:
+        return {"choice": "TIE"}
+    label_match = re.search(r'["\']?overall_label["\']?\s*[:=]\s*["\']?(win|tie|lose)["\']?', text, re.I)
+    if label_match:
+        return {"overall_label": label_match.group(1).lower()}
+    if "win" in lowered:
+        return {"overall_label": "win"}
+    if "lose" in lowered:
+        return {"overall_label": "lose"}
+    raise ValueError(f"No JSON object found in response: {text[:500]}")
 
 
 def clamp_float(value, minimum, maximum, default):
@@ -277,9 +297,9 @@ def load_model(args):
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
         )
-    from transformers import AutoModelForMultimodalLM
+    from transformers import AutoModelForImageTextToText
 
-    model = AutoModelForMultimodalLM.from_pretrained(args.model_name, **model_kwargs)
+    model = AutoModelForImageTextToText.from_pretrained(args.model_name, **model_kwargs)
     if args.adapter:
         from peft import PeftModel
 
@@ -296,6 +316,7 @@ def generate_one(model, processor, record, project_root, prompt, args, candidate
         tokenize=True,
         return_dict=True,
         return_tensors="pt",
+        enable_thinking=False,
     ).to(next(model.parameters()).device)
     generation_kwargs = {"max_new_tokens": args.max_new_tokens, "do_sample": args.temperature > 0}
     if args.temperature > 0:

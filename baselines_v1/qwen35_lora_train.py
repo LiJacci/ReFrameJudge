@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""LoRA SFT trainer for Qwen3.5 on ReFrameJudge-v1."""
+"""LoRA SFT trainer for Qwen3.5 on ReFrameJudge-v1 with multi-GPU support."""
 
 import argparse
 import json
-import math
-import mimetypes
 import random
 from pathlib import Path
 
-import numpy as np
 import torch
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from torch.utils.data import DataLoader, Dataset
-from tqdm import tqdm
-from transformers import AutoProcessor, BitsAndBytesConfig, get_linear_schedule_with_warmup
+from torch.utils.data import Dataset
+from transformers import (
+    AutoProcessor,
+    AutoModelForImageTextToText,
+    BitsAndBytesConfig,
+    TrainingArguments,
+    Trainer,
+    set_seed,
+)
 
 
 PROMPT = """You are an expert evaluator for photographic recomposition.
@@ -70,10 +73,7 @@ def resolve_image_path(project_root, image_path):
 
 
 def image_uri(path):
-    mime_type, _ = mimetypes.guess_type(path)
-    if mime_type is None:
-        mime_type = "image/jpeg"
-    return path.as_uri()
+    return str(path)
 
 
 def target_json(record, include_reason):
@@ -153,14 +153,6 @@ class Qwen35Collator:
         return full_inputs
 
 
-def seed_everything(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed_all(seed)
-
-
 def lora_target_modules(value):
     value = value.strip()
     if value == "all-linear":
@@ -168,9 +160,30 @@ def lora_target_modules(value):
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def disable_peft_adapter_probe(local_only):
+    """Work around transformers/huggingface_hub making a Hub HEAD request for
+    adapter_config.json even when local_files_only=True.  This script loads a
+    base model and attaches LoRA itself, so the adapter probe is unnecessary
+    and fails when the configured mirror endpoint is unreachable.
+    """
+    if not local_only:
+        return
+    import transformers.utils.peft_utils as peft_utils
+
+    peft_utils.find_adapter_config_file = lambda *args, **kwargs: None
+
+
 def load_model(args):
+    import os
+    local_rank = int(os.environ.get("LOCAL_RANK", -1))
+    if local_rank >= 0:
+        device_map = {"": local_rank}
+        print(f"Distributed mode: local_rank={local_rank}, device_map={device_map}")
+    else:
+        device_map = "auto"
+    
     model_kwargs = {
-        "device_map": args.device_map,
+        "device_map": device_map,
         "cache_dir": args.hf_cache_dir,
         "local_files_only": args.local_files_only,
         "trust_remote_code": args.trust_remote_code,
@@ -183,15 +196,15 @@ def load_model(args):
             bnb_4bit_compute_dtype=torch.bfloat16,
             bnb_4bit_use_double_quant=True,
         )
-    from transformers import AutoModelForMultimodalLM
 
-    model = AutoModelForMultimodalLM.from_pretrained(args.model_name, **model_kwargs)
-    if args.gradient_checkpointing:
-        model.gradient_checkpointing_enable()
-        if hasattr(model, "config"):
-            model.config.use_cache = False
+    model = AutoModelForImageTextToText.from_pretrained(args.model_name, **model_kwargs)
     if args.load_in_4bit:
         model = prepare_model_for_kbit_training(model)
+    if args.gradient_checkpointing:
+        model.gradient_checkpointing_enable(gradient_checkpointing_kwargs={"use_reentrant": False})
+        if hasattr(model, "config"):
+            model.config.use_cache = False
+        model.enable_input_require_grads()
     config = LoraConfig(
         r=args.lora_r,
         lora_alpha=args.lora_alpha,
@@ -205,28 +218,6 @@ def load_model(args):
     return model
 
 
-def move_to_device(batch, device):
-    return {key: value.to(device) if torch.is_tensor(value) else value for key, value in batch.items()}
-
-
-def run_eval_loss(model, loader, device, max_batches=None):
-    model.eval()
-    losses = []
-    with torch.no_grad():
-        for index, batch in enumerate(loader, 1):
-            batch = move_to_device(batch, device)
-            losses.append(float(model(**batch).loss.detach().cpu()))
-            if max_batches is not None and index >= max_batches:
-                break
-    model.train()
-    return None if not losses else float(sum(losses) / len(losses))
-
-
-def save_json(path, payload):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
-
-
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--train-jsonl", type=Path, required=True)
@@ -237,7 +228,6 @@ def main():
     parser.add_argument("--hf-cache-dir", type=Path, default=Path("data/cache/huggingface"))
     parser.add_argument("--prompt-file", type=Path)
     parser.add_argument("--include-reason", action="store_true")
-    parser.add_argument("--device-map", default="auto")
     parser.add_argument("--torch-dtype", choices=["auto", "float16", "bfloat16", "float32"], default="bfloat16")
     parser.add_argument("--load-in-4bit", action="store_true")
     parser.add_argument("--trust-remote-code", action="store_true")
@@ -260,14 +250,18 @@ def main():
     parser.add_argument("--max-train-samples", type=int)
     parser.add_argument("--max-val-samples", type=int)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--mixed-precision", choices=["fp16", "bf16", "no"], default="no")
     args = parser.parse_args()
 
     if args.train_batch_size != 1:
         raise ValueError("Only --train-batch-size 1 is currently supported.")
 
-    seed_everything(args.seed)
+    set_seed(args.seed)
     project_root = args.project_root.resolve()
     prompt = args.prompt_file.read_text(encoding="utf-8") if args.prompt_file else PROMPT
+
+    disable_peft_adapter_probe(args.local_files_only)
+
     processor = AutoProcessor.from_pretrained(
         args.model_name,
         cache_dir=args.hf_cache_dir,
@@ -275,70 +269,53 @@ def main():
         trust_remote_code=args.trust_remote_code,
     )
     model = load_model(args)
-    device = next(model.parameters()).device
 
     train_records = read_jsonl(args.train_jsonl, args.max_train_samples, args.seed)
     val_records = read_jsonl(args.val_jsonl, args.max_val_samples, args.seed)
     collator = Qwen35Collator(processor, project_root, prompt, args.include_reason)
-    train_loader = DataLoader(ReFrameJudgeDataset(train_records), batch_size=1, shuffle=True, collate_fn=collator)
-    val_loader = DataLoader(ReFrameJudgeDataset(val_records), batch_size=1, shuffle=False, collate_fn=collator)
 
-    optimizer = torch.optim.AdamW(model.parameters(), lr=args.learning_rate, weight_decay=args.weight_decay)
-    update_steps_per_epoch = math.ceil(len(train_loader) / args.gradient_accumulation_steps)
-    total_steps = max(1, update_steps_per_epoch * args.epochs)
-    scheduler = get_linear_schedule_with_warmup(optimizer, int(total_steps * args.warmup_ratio), total_steps)
-
-    args.output_dir.mkdir(parents=True, exist_ok=True)
-    save_json(
-        args.output_dir / "train_config.json",
-        {**vars(args), "train_records": len(train_records), "val_records": len(val_records), "total_steps": total_steps},
+    training_args = TrainingArguments(
+        output_dir=str(args.output_dir),
+        per_device_train_batch_size=args.train_batch_size,
+        per_device_eval_batch_size=args.train_batch_size,
+        gradient_accumulation_steps=args.gradient_accumulation_steps,
+        num_train_epochs=args.epochs,
+        learning_rate=args.learning_rate,
+        weight_decay=args.weight_decay,
+        warmup_ratio=args.warmup_ratio,
+        max_grad_norm=args.max_grad_norm,
+        logging_steps=args.logging_steps,
+        eval_steps=args.eval_steps,
+        save_steps=args.save_steps,
+        save_strategy="steps",
+        eval_strategy="steps" if args.eval_steps else "no",
+        logging_strategy="steps",
+        seed=args.seed,
+        fp16=args.mixed_precision == "fp16",
+        bf16=args.mixed_precision == "bf16",
+        gradient_checkpointing=args.gradient_checkpointing,
+        remove_unused_columns=False,
+        report_to="none",
+        ddp_find_unused_parameters=False,
+        dataloader_pin_memory=False,
     )
 
-    model.train()
-    global_step = 0
-    running_loss = 0.0
-    history = []
-    best_val_loss = None
-    for epoch in range(1, args.epochs + 1):
-        progress = tqdm(train_loader, desc=f"epoch {epoch}/{args.epochs}")
-        optimizer.zero_grad(set_to_none=True)
-        for micro_step, batch in enumerate(progress, 1):
-            batch = move_to_device(batch, device)
-            loss = model(**batch).loss / args.gradient_accumulation_steps
-            loss.backward()
-            running_loss += float(loss.detach().cpu()) * args.gradient_accumulation_steps
-            if micro_step % args.gradient_accumulation_steps == 0 or micro_step == len(train_loader):
-                torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
-                optimizer.step()
-                scheduler.step()
-                optimizer.zero_grad(set_to_none=True)
-                global_step += 1
-                if global_step % args.logging_steps == 0:
-                    avg_loss = running_loss / args.logging_steps
-                    running_loss = 0.0
-                    progress.set_postfix({"step": global_step, "loss": f"{avg_loss:.4f}"})
-                    history.append({"step": global_step, "epoch": epoch, "train_loss": avg_loss})
-                if args.eval_steps and global_step % args.eval_steps == 0:
-                    val_loss = run_eval_loss(model, val_loader, device)
-                    print(f"step={global_step} val_loss={val_loss:.4f}")
-                    history.append({"step": global_step, "epoch": epoch, "val_loss": val_loss})
-                    if best_val_loss is None or val_loss < best_val_loss:
-                        best_val_loss = val_loss
-                        model.save_pretrained(args.output_dir / "best_adapter")
-                        processor.save_pretrained(args.output_dir / "best_adapter")
-                if args.save_steps and global_step % args.save_steps == 0:
-                    checkpoint_dir = args.output_dir / f"checkpoint-{global_step}"
-                    model.save_pretrained(checkpoint_dir)
-                    processor.save_pretrained(checkpoint_dir)
+    trainer = Trainer(
+        model=model,
+        args=training_args,
+        train_dataset=ReFrameJudgeDataset(train_records),
+        eval_dataset=ReFrameJudgeDataset(val_records),
+        data_collator=collator,
+    )
 
-    final_val_loss = run_eval_loss(model, val_loader, device)
+    trainer.train()
+
     model.save_pretrained(args.output_dir)
     processor.save_pretrained(args.output_dir)
-    save_json(
-        args.output_dir / "train_metrics.json",
-        {"global_step": global_step, "final_val_loss": final_val_loss, "best_val_loss": best_val_loss, "history": history},
-    )
-    print(json.dumps({"output_dir": str(args.output_dir), "global_step": global_step, "final_val_loss": final_val_loss}, indent=2))
+
+    if args.eval_steps:
+        eval_results = trainer.evaluate()
+        print(f"Final eval results: {eval_results}")
 
 
 if __name__ == "__main__":

@@ -8,16 +8,23 @@ All baselines assume a Python virtualenv at `.venvR` in the project root. Create
 
 ```bash
 cd /path/to/ReFrameJudge
-python -m venv .venvR
+/usr/bin/python3.10 -m venv .venvR
 ```
 
 Install dependencies:
 
 ```bash
-.venvR/bin/python -m pip install --upgrade pip setuptools wheel
-.venvR/bin/python -m pip install --only-binary :all: av
+.venvR/bin/python -m pip install --upgrade pip
 .venvR/bin/python -m pip install -r requirements-baseline.txt
-.venvR/bin/python -m pip install -U "transformers>=4.57.0"
+.venvR/bin/python -m pip install "transformers @ git+https://github.com/huggingface/transformers.git@main" accelerate bitsandbytes
+```
+
+```bash
+conda create -n reframe python=3.10 -y
+conda activate reframe
+pip install --upgrade pip
+pip install -r /workspace/ceph/ReFrameJudge/requirements-baseline.txt
+pip install "transformers @ git+https://github.com/huggingface/transformers.git@main" accelerate bitsandbytes
 ```
 
 If you need a proxy or Hugging Face mirror:
@@ -79,7 +86,7 @@ For 24GB GPUs, start with 4B. If 4B works, run 9B.
 ### Qwen3.5-4B No-LoRA Blind A/B
 
 ```bash
-.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+python baselines_v1/qwen35_local_judge.py \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
   --model-name Qwen/Qwen3.5-4B \
@@ -102,7 +109,7 @@ Smoke test:
 ### Qwen3.5-9B No-LoRA Blind A/B
 
 ```bash
-.venvR/bin/python baselines_v1/qwen35_local_judge.py \
+python baselines_v1/qwen35_local_judge.py \
   --input-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_test.jsonl \
   --project-root . \
   --model-name Qwen/Qwen3.5-9B \
@@ -121,7 +128,10 @@ Smoke test:
 Run a small smoke test first:
 
 ```bash
-.venvR/bin/python baselines_v1/qwen35_lora_train.py \
+export CUDA_VISIBLE_DEVICES=4,5,6,7
+export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
+
+accelerate launch --num_processes=4 baselines_v1/qwen35_lora_train.py \
   --train-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_train.jsonl \
   --val-jsonl data/reframejudge_v1/splits/reframejudge_v1_combined_balanced1000_val.jsonl \
   --project-root . \
@@ -130,6 +140,8 @@ Run a small smoke test first:
   --output-dir baselines_v1/outputs/qwen35_4b_reframejudge_lora_smoke \
   --load-in-4bit \
   --gradient-checkpointing \
+  --mixed-precision bf16 \
+  --local-files-only \
   --max-train-samples 8 \
   --max-val-samples 4 \
   --epochs 1 \
@@ -160,7 +172,8 @@ Full 4B LoRA training:
   --lora-dropout 0.05 \
   --lora-target-modules all-linear \
   --eval-steps 50 \
-  --save-steps 100
+  --save-steps 100 \
+  --local-files-only
 ```
 
 Evaluate 4B LoRA in source/candidate mode:
@@ -177,7 +190,8 @@ Evaluate 4B LoRA in source/candidate mode:
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_source_candidate_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
-  --temperature 0
+  --temperature 0 \
+  --local-files-only
 ```
 
 Evaluate 4B LoRA in blind A/B mode:
@@ -195,7 +209,8 @@ Evaluate 4B LoRA in blind A/B mode:
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_4b_lora_r16_e3_blindab_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
-  --temperature 0
+  --temperature 0 \
+  --local-files-only
 ```
 
 ### Qwen3.5-9B LoRA Training
@@ -222,7 +237,8 @@ Use the same settings after 4B is verified:
   --lora-dropout 0.05 \
   --lora-target-modules all-linear \
   --eval-steps 50 \
-  --save-steps 100
+  --save-steps 100 \
+  --local-files-only
 ```
 
 Evaluate 9B LoRA in source/candidate mode:
@@ -239,7 +255,8 @@ Evaluate 9B LoRA in source/candidate mode:
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_source_candidate_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
-  --temperature 0
+  --temperature 0 \
+  --local-files-only
 ```
 
 Evaluate 9B LoRA in blind A/B mode:
@@ -257,7 +274,8 @@ Evaluate 9B LoRA in blind A/B mode:
   --predictions-jsonl baselines_v1/outputs/reframejudge_v1_qwen35_9b_lora_r16_e3_blindab_test_predictions.jsonl \
   --load-in-4bit \
   --max-new-tokens 512 \
-  --temperature 0
+  --temperature 0 \
+  --local-files-only
 ```
 
 ### Score Calibration
